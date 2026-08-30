@@ -1,0 +1,73 @@
+# ==============================================================================
+# Keirox Distributed Runtime — .gitignore
+# ==============================================================================
+
+# Rust / Cargo build artifacts
+/target/
+**/*.rs.bk
+*.bk
+cargo-timing.html
+
+# Profiling, Tracing & Performance Benchmark Artifacts
+flamegraph.svg
+perf.data
+perf.data.old
+*.profraw
+*.profdata
+*.heap
+/benchmark_reports/
+/benchmark_results/
+/test_results/
+
+# Data & Test Storage Directories
+/data/
+/wal/
+/storage_tier0/
+/storage_tier1/
+/lakehouse_local/
+/scratch/
+*.tmp
+*.log
+
+# Environment & Secrets (Never commit secrets)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.cert
+*.pfx
+*.p12
+*.vault
+credentials.json
+
+# Operating System Files
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# IDE & Editor Configurations
+.idea/
+*.iml
+*.iws
+*.ipr
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+*.sublime-project
+*.sublime-workspace
+*.swp
+*.swo
+*~
+*.bak
+
+# Temporary dumps & local scratch
+full_dump.txt
+/tmp/
