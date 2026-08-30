@@ -15,9 +15,18 @@ keirox-timer.workspace = true
 keirox-arena.workspace = true
 keirox-arrow-elt.workspace = true
 keirox-api.workspace = true
+keirox-consensus.workspace = true
+keirox-coordinator.workspace = true
+keirox-tier1.workspace = true
+keirox-schema.workspace = true
+keirox-gateway.workspace = true
+keirox-sdk.workspace = true
+crc32fast.workspace = true
 bytes.workspace = true
+tokio.workspace = true
 arrow.workspace = true
 serde_json.workspace = true
+async-trait.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true

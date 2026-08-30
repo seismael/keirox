@@ -63,8 +63,8 @@ impl RecoveryReconciler {
             let mut reader = match SegmentReader::open(&segment_path) {
                 Ok(r) => r,
                 Err(e) => {
-                    tracing::warn!(
-                        "Skipping corrupt segment file {}: {:?}",
+                    tracing::error!(
+                        "Fatal corruption in segment file {}: {:?}",
                         segment_path.display(),
                         e
                     );
@@ -143,7 +143,7 @@ mod tests {
         let report = reconciler
             .replay_all(|batch| {
                 for r in &batch.records {
-                    replayed_offsets.push(r.logical_offset);
+                    replayed_offsets.push(r.logical_offset());
                 }
                 Ok(())
             })

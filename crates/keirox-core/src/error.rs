@@ -24,6 +24,38 @@ pub enum KeiroxError {
     #[error("Storage I/O failure: {0}")]
     StorageIo(#[from] std::io::Error),
 
+    /// Consensus or replication failure.
+    #[error("Consensus error: {0}")]
+    Consensus(String),
+
+    /// Coordinator shard epoch is stale (fenced).
+    #[error("Epoch fenced: {0}")]
+    EpochFenced(String),
+
+    /// Quorum could not be achieved.
+    #[error("Quorum unavailable: {0}")]
+    QuorumUnavailable(String),
+
+    /// Tier-1 object storage error.
+    #[error("Tier-1 storage error: {0}")]
+    Tier1Storage(String),
+
+    /// Operation rejected due to missing permissions or authorization failure.
+    #[error("Unauthorized: {0}")]
+    Unauthorized(String),
+
+    /// Attempted to decrypt or access crypto-shredded data.
+    #[error("Crypto-shredded key destroyed: {0}")]
+    KeyDestroyed(String),
+
+    /// Record schema is incompatible with target schema registry definition.
+    #[error("Schema incompatible: {0}")]
+    SchemaIncompatible(String),
+
+    /// Audit trail hash chain tampering or integrity verification failure.
+    #[error("Audit integrity violation: {0}")]
+    AuditIntegrityViolation(String),
+
     /// Internal error.
     #[error("Internal runtime error: {0}")]
     Internal(String),

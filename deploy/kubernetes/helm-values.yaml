@@ -1,0 +1,40 @@
+# Production Helm values for Keirox Distributed Cluster per KEI-K8S-501
+
+cluster:
+  name: "keirox-production"
+  replicas: 3
+  image:
+    repository: "keirox/keirox-server"
+    tag: "v1.0.0"
+    pullPolicy: "IfNotPresent"
+
+resources:
+  limits:
+    cpu: "8000m"
+    memory: "16Gi"
+  requests:
+    cpu: "4000m"
+    memory: "8Gi"
+
+storage:
+  wal:
+    storageClassName: "local-nvme-sc"
+    size: "500Gi"
+  lakehouse:
+    s3Endpoint: "https://s3.us-east-1.amazonaws.com"
+    bucket: "keirox-production-lakehouse"
+    region: "us-east-1"
+
+security:
+  tls:
+    enabled: true
+    certManagerIssuer: "letsencrypt-prod"
+  kms:
+    provider: "aws-kms"
+    keyArn: "arn:aws:kms:us-east-1:123456789012:key/keirox-kek"
+
+monitoring:
+  prometheus:
+    enabled: true
+    path: "/metrics"
+    port: 9090

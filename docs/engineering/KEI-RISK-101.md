@@ -1,10 +1,10 @@
-# KEI-RISK-001 — Risk Reduction and Go/No-Go Plan
+# KEI-RISK-101 — Risk Reduction and Go/No-Go Plan
 
 ## 1. Document Control
 
 | Field | Value |
 |---|---|
-| Document ID | KEI-RISK-001 |
+| Document ID | KEI-RISK-101 |
 | Title | Risk Reduction and Go/No-Go Plan |
 | Version | 1.0 |
 | Level | Engineering Execution Plan |
@@ -12,7 +12,7 @@
 | Phase | Phase 1 Engineering Bridge + Full Phase 1 |
 | Owner | Engineering Program Lead / Chief Architect |
 | Governing Plan | KEI-ENG-100 — Phase 1 Engineering Execution Plan |
-| Related Plans | KEI-SPIKE-001, KEI-FORMAL-001, KEI-BENCH-001, KEI-ORG-001 |
+| Related Plans | KEI-SPIKE-101, KEI-FORMAL-101, KEI-BENCH-101 |
 | Governing Architecture Documents | KEI-ARC-010..027, KEI-DES-030..036, KEI-VAL-050..052 |
 
 ---
@@ -52,7 +52,7 @@ Risks are evaluated on a 5x5 matrix based on **Likelihood** and **Impact**.
 
 ## 4. Top Technical Risks & Mitigation Strategies
 
-These are the highest-risk engineering challenges identified during the architecture phase. They must be actively de-risked during the 90-day Prototype (KEI-SPIKE-001).
+These are the highest-risk engineering challenges identified during the architecture phase. They must be actively de-risked during the 90-day Prototype (KEI-SPIKE-101).
 
 ### 4.1 Risk: io_uring / O_DIRECT Complexity and Kernel Dependencies
 * **Description:** The hot write path relies on `io_uring` with `O_DIRECT` to achieve <2ms p99 latency. Bugs in ring buffer management, page alignment, or kernel version incompatibilities could cause data corruption or severe latency spikes.
@@ -104,7 +104,7 @@ These are the highest-risk engineering challenges identified during the architec
 The project is governed by strict evidence gates. Progression to the next phase is **impossible** without passing the preceding gate.
 
 ### 5.1 Gate 1: Prototype Evidence Gate (End of Week 12)
-* **Context:** End of the 90-day Minimum Vertical Prototype (KEI-SPIKE-001).
+* **Context:** End of the 90-day Minimum Vertical Prototype (KEI-SPIKE-101).
 * **Go Criteria:**
   1. Single-node append, lease, ACK, and watermark flow works end-to-end.
   2. P1-Proto benchmark achieves ≥50 MB/s throughput with p99 ≤ 2ms.
@@ -119,7 +119,7 @@ The project is governed by strict evidence gates. Progression to the next phase 
   1. 100,000 virtual streams stable; 1,000,000 validated under controlled benchmark.
   2. 100,000 concurrent active leases stable.
   3. WAF (Write Amplification Factor) measured at ≤ 1.35.
-  4. Formal TLA+ models (KEI-FORMAL-001) pass with zero unresolved counterexamples.
+  4. Formal TLA+ models (KEI-FORMAL-101) pass with zero unresolved counterexamples.
   5. All Phase 1 runbooks (KEI-OPS-040) tested and validated.
 * **No-Go Consequence:** Phase 1 is extended. Distributed consensus (Phase 2) cannot begin until single-node invariants are mathematically and empirically proven.
 

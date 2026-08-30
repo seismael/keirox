@@ -10,3 +10,12 @@ description = "Chaos engineering fault injectors and Jepsen verification suites 
 keirox-core.workspace = true
 tokio.workspace = true
 tracing.workspace = true
+
+[dev-dependencies]
+keirox-api.workspace = true
+keirox-consensus.workspace = true
+keirox-coordinator.workspace = true
+keirox-state.workspace = true
+keirox-testkit.workspace = true
+keirox-wal.workspace = true
+tempfile.workspace = true

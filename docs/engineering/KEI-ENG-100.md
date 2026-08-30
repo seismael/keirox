@@ -13,7 +13,7 @@
 | Owner | Engineering Program Lead / Chief Architect |
 | Required Reviewers | Chief Architect, Storage Lead, State Plane Lead, Data Platform Lead, SRE/QA Lead |
 | Governing Architecture Documents | KEI-ARC-001, KEI-ARC-010, KEI-ARC-011, KEI-ARC-012, KEI-ARC-020, KEI-ARC-021, KEI-ARC-023, KEI-ARC-027, KEI-DES-030, KEI-DES-031, KEI-DES-032, KEI-OPS-041 |
-| Next Plan File | KEI-SPIKE-001 — Minimum Vertical Prototype Plan |
+| Next Plan File | KEI-SPIKE-101 — Minimum Vertical Prototype Plan |
 
 ---
 
@@ -919,11 +919,10 @@ After this document, the planning suite continues with:
 
 | Next File | Purpose |
 |---|---|
-| KEI-SPIKE-001 | Minimum Vertical Prototype Plan. |
-| KEI-FORMAL-001 | Formal State Machine Validation Plan. |
-| KEI-BENCH-001 | Benchmark and Evidence Harness Plan. |
-| KEI-ORG-001 | Team, Governance, and Delivery Plan. |
-| KEI-RISK-001 | Risk Reduction and Go/No-Go Plan. |
+| KEI-SPIKE-101 | Minimum Vertical Prototype Plan. |
+| KEI-FORMAL-101 | Formal State Machine Validation Plan. |
+| KEI-BENCH-101 | Benchmark and Evidence Harness Plan. |
+| KEI-RISK-101 | Risk Reduction and Go/No-Go Plan. |
 
 ---
 

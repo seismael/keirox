@@ -20,7 +20,7 @@
 ## 2. Purpose and Scope
 
 ### 2.1 Purpose
-This document serves as the **final, independent cross-document consistency audit** of the Keirox Polymorphic Event Fabric (PEF) architecture suite. Its purpose is to mathematically and logically verify that the 22 core architecture and specification documents form a single, non-contradictory, and fully traceable engineering baseline. 
+This document serves as the **final, independent cross-document consistency audit** of the Keirox Polymorphic Event Fabric (PEF) architecture suite. Its purpose is to mathematically and logically verify that the 25 architecture and specification documents form a single, non-contradictory, and fully traceable engineering baseline. 
 
 It specifically verifies that the dangerous overclaims, speculative hardware dependencies, and scope-creep risks present in the *original conceptual whitepapers* have been successfully eradicated, bounded, or replaced with rigorous, testable engineering contracts.
 
@@ -91,7 +91,7 @@ KEI-ARC-012 defines 38 binding ADRs. This audit samples critical ADRs to ensure 
 
 | ADR | Decision | L3 Implementation Verification | Status |
 |---|---|---|---|
-| **ADR-013** | Batch-oriented WAL framing with CRC32C. | KEI-DES-030 §5 defines 128-byte Batch Headers and 32-byte Record Entries with CRC32C. | ✅ Implemented |
+| **ADR-013** | Batch-oriented WAL framing with CRC32C. | KEI-DES-030 §5 defines 128-byte Batch Headers and 46-byte Record Entries with CRC32C. | ✅ Implemented |
 | **ADR-020** | ACK_FAST and ACK_DURABLE modes. | KEI-DES-031 §12 defines distinct code paths and journal replication semantics for both modes. | ✅ Implemented |
 | **ADR-042** | Adaptive shredding with 64-key cap. | KEI-DES-033 §8 enforces `max_shredded_fields = 64` and routes excess to `_unstructured_payload`. | ✅ Implemented |
 | **ADR-043** | Shared tenant Iceberg tables. | KEI-DES-034 §5 defines `tenant_{id}.events` as the default, explicitly banning per-stream tables by default. | ✅ Implemented |

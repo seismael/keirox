@@ -20,10 +20,14 @@ fn verify_markdown_file_links(file_path: &Path, root_dir: &Path) {
                     // Clean anchor #...
                     let link_target = raw_link.split('#').next().unwrap_or("").trim();
 
-                    // Only check local relative file links (ignore http/https/mailto)
+                    // Only check local relative file links (ignore http/https/mailto and documentation placeholders)
                     if !link_target.is_empty()
                         && !link_target.starts_with("http")
                         && !link_target.starts_with("mailto:")
+                        && link_target != "path"
+                        && link_target != "url"
+                        && link_target != "file"
+                        && link_target != "target"
                     {
                         let target_path = if let Some(stripped) = link_target.strip_prefix('/') {
                             root_dir.join(stripped)
@@ -48,6 +52,22 @@ fn verify_markdown_file_links(file_path: &Path, root_dir: &Path) {
     }
 }
 
+fn find_all_markdown_files(dir: &Path, files: &mut Vec<PathBuf>) {
+    if let Ok(entries) = fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            let path = entry.path();
+            if path.is_dir() {
+                let dir_name = path.file_name().unwrap_or_default().to_string_lossy();
+                if dir_name != "target" && dir_name != ".git" && dir_name != "node_modules" {
+                    find_all_markdown_files(&path, files);
+                }
+            } else if path.extension().is_some_and(|ext| ext == "md") {
+                files.push(path);
+            }
+        }
+    }
+}
+
 #[test]
 fn test_all_key_markdown_links_are_valid() {
     let root = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
@@ -57,26 +77,16 @@ fn test_all_key_markdown_links_are_valid() {
         .unwrap()
         .to_path_buf();
 
-    let files_to_check = [
-        root.join("README.md"),
-        root.join("AGENTS.md"),
-        root.join("CONTRIBUTING.md"),
-        root.join("docs/architecture/INDEX.md"),
-        root.join("docs/engineering/README.md"),
-        root.join("docs/benchmarks/README.md"),
-        root.join("docs/reports/README.md"),
-        root.join("docs/archive/README.md"),
-        root.join("scripts/README.md"),
-        root.join("deploy/README.md"),
-        root.join("tests/integration/README.md"),
-        root.join("tests/golden/README.md"),
-        root.join("tests/chaos/README.md"),
-        root.join("tests/soak/README.md"),
-    ];
+    let mut all_md_files = Vec::new();
+    find_all_markdown_files(&root, &mut all_md_files);
 
-    for file in &files_to_check {
-        if file.exists() {
-            verify_markdown_file_links(file, &root);
-        }
+    assert!(
+        all_md_files.len() >= 30,
+        "Expected at least 30 markdown files in the repo, found {}",
+        all_md_files.len()
+    );
+
+    for file in &all_md_files {
+        verify_markdown_file_links(file, &root);
     }
 }

@@ -1,0 +1,19 @@
+[package]
+name = "keirox-schema"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Schema registry, compatibility governance, and adaptive columnar shredding policy per KEI-ARC-024."
+
+[dependencies]
+keirox-core = { workspace = true }
+arrow = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

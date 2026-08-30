@@ -9,5 +9,6 @@ description = "Core domain abstractions, errors, and invariants for Keirox Polym
 [dependencies]
 thiserror.workspace = true
 serde.workspace = true
-bytes.workspace = true
-tracing.workspace = true
+aes-gcm.workspace = true
+rand.workspace = true
+crc32fast.workspace = true

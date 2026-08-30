@@ -1,0 +1,29 @@
+[package]
+name = "keirox-tier1"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Tier-1 continuous S3/GCS cloud object storage streaming, multipart uploader, and manifest registry for Keirox"
+
+[dependencies]
+keirox-core = { workspace = true }
+keirox-wal = { workspace = true }
+keirox-arrow-elt = { workspace = true }
+
+tokio = { workspace = true }
+async-trait = { workspace = true }
+bytes = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+crc32fast = { workspace = true }
+twox-hash = { workspace = true }
+tracing = { workspace = true }
+metrics = { workspace = true }
+thiserror = { workspace = true }
+rand = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

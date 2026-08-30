@@ -53,6 +53,7 @@ impl SegmentFile {
             .open(&path_buf)?;
 
         let header = SegmentHeader::new(segment_id, volume_id, node_id, physical_seq_start);
+        // SAFETY: `header` is a valid #[repr(C)] POD struct with known size and memory layout.
         let header_bytes = unsafe {
             std::slice::from_raw_parts(
                 &header as *const SegmentHeader as *const u8,
@@ -95,6 +96,7 @@ impl SegmentFile {
         let batch_start_offset = self.write_cursor;
 
         // 1. Write 128-byte BatchHeader
+        // SAFETY: `header` is a valid #[repr(C)] POD struct with known size.
         let header_bytes = unsafe {
             std::slice::from_raw_parts(
                 header as *const BatchHeader as *const u8,
@@ -108,6 +110,7 @@ impl SegmentFile {
             if !record.is_valid() {
                 return Err(KeiroxError::Internal("Invalid record entry CRC".into()));
             }
+            // SAFETY: `record` is a valid #[repr(C, packed)] POD struct with known size.
             let record_bytes = unsafe {
                 std::slice::from_raw_parts(
                     record as *const RecordEntry as *const u8,
@@ -154,6 +157,7 @@ impl SegmentFile {
             sealed_timestamp_ns,
         );
 
+        // SAFETY: `footer` is a valid #[repr(C)] POD struct with known size and memory layout.
         let footer_bytes = unsafe {
             std::slice::from_raw_parts(
                 &footer as *const SegmentFooter as *const u8,
@@ -198,6 +202,7 @@ impl SegmentReader {
         let mut header_buf = vec![0u8; size_of::<SegmentHeader>()];
         file.read_exact(&mut header_buf)?;
 
+        // SAFETY: `header_buf` has length size_of::<SegmentHeader>().
         let header: SegmentHeader =
             unsafe { std::ptr::read_unaligned(header_buf.as_ptr() as *const SegmentHeader) };
 
@@ -228,6 +233,7 @@ impl SegmentReader {
                 Err(e) => return Err(e.into()),
             }
 
+            // SAFETY: `header_buf` has length size_of::<BatchHeader>().
             let batch_header: BatchHeader =
                 unsafe { std::ptr::read_unaligned(header_buf.as_ptr() as *const BatchHeader) };
 
@@ -246,6 +252,7 @@ impl SegmentReader {
             for _ in 0..batch_header.record_count {
                 let mut record_buf = vec![0u8; size_of::<RecordEntry>()];
                 self.file.read_exact(&mut record_buf)?;
+                // SAFETY: `record_buf` has length size_of::<RecordEntry>().
                 let record: RecordEntry =
                     unsafe { std::ptr::read_unaligned(record_buf.as_ptr() as *const RecordEntry) };
                 if !record.is_valid() {
@@ -334,8 +341,8 @@ mod tests {
             let batch = &batches[0];
             assert_eq!(batch.header.record_count, 2);
             assert_eq!(batch.records.len(), 2);
-            assert_eq!(batch.records[0].logical_offset, 0);
-            assert_eq!(batch.records[1].logical_offset, 1);
+            assert_eq!(batch.records[0].logical_offset(), 0);
+            assert_eq!(batch.records[1].logical_offset(), 1);
             assert_eq!(batch.payload.len(), 32);
         }
     }

@@ -1,10 +1,10 @@
-# KEI-FORMAL-001 — State Machine Validation Plan
+# KEI-FORMAL-101 — State Machine Validation Plan
 
 ## 1. Document Control
 
 | Field | Value |
 |---|---|
-| Document ID | KEI-FORMAL-001 |
+| Document ID | KEI-FORMAL-101 |
 | Title | State Machine Validation Plan |
 | Version | 1.0 |
 | Level | Engineering Execution Plan |
@@ -13,9 +13,9 @@
 | Duration | 90 days / 12 weeks |
 | Owner | Formal Methods Lead / Distributed Systems Lead |
 | Governing Plan | KEI-ENG-100 — Phase 1 Engineering Execution Plan |
-| Related Plan | KEI-SPIKE-001 — Minimum Vertical Prototype Plan |
+| Related Plan | KEI-SPIKE-101 — Minimum Vertical Prototype Plan |
 | Governing Architecture Documents | KEI-ARC-010, KEI-ARC-021, KEI-ARC-022, KEI-DES-031, KEI-OPS-041 |
-| Next Plan File | KEI-BENCH-001 — Benchmark and Evidence Harness Plan |
+| Next Plan File | KEI-BENCH-101 — Benchmark and Evidence Harness Plan |
 
 ---
 
@@ -64,7 +64,7 @@ The purpose of this plan is to:
 7. Duplicate ACK idempotence modeling.
 8. Stale lease rejection modeling.
 9. Test oracle derivation.
-10. Integration with KEI-SPIKE-001 prototype.
+10. Integration with KEI-SPIKE-101 prototype.
 
 **Out of scope:**
 
@@ -368,9 +368,9 @@ The runtime invariant checker is embedded in:
 
 ## 12. Integration with Prototype
 
-### 12.1 Relationship to KEI-SPIKE-001
+### 12.1 Relationship to KEI-SPIKE-101
 
-This plan runs in parallel with KEI-SPIKE-001.
+This plan runs in parallel with KEI-SPIKE-101.
 
 | Prototype Week | Formal Validation Activity |
 |---|---|
@@ -434,7 +434,7 @@ When the prototype discovers a behavior that contradicts the model:
 | Lease lifecycle specification | KEI-DES-031 |
 | Epoch fencing specification | KEI-ARC-022 |
 | Journal replay specification | KEI-DES-031 |
-| Prototype implementation | KEI-SPIKE-001 |
+| Prototype implementation | KEI-SPIKE-101 |
 | Test infrastructure | KEI-OPS-041 |
 
 ---
@@ -583,4 +583,4 @@ This skeleton will be expanded into five complete TLA+ modules during execution.
 
 | Version | Date | Change |
 |---|---|---|
-| 1.0 | 2026-08-30 | Initial State Machine Validation Plan. Defines five TLA+ models, safety and liveness invariants, model checking strategy, counterexample handling, test oracle derivation, and integration with KEI-SPIKE-001 prototype. |
+| 1.0 | 2026-08-30 | Initial State Machine Validation Plan. Defines five TLA+ models, safety and liveness invariants, model checking strategy, counterexample handling, test oracle derivation, and integration with KEI-SPIKE-101 prototype. |

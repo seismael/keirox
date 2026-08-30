@@ -1,0 +1,30 @@
+[package]
+name = "keirox-coordinator"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Deterministic coordinator sharding, consistent hashing, and epoch fencing for Keirox"
+
+[dependencies]
+keirox-core = { workspace = true }
+keirox-state = { workspace = true }
+keirox-timer = { workspace = true }
+keirox-consensus = { workspace = true }
+
+tokio = { workspace = true }
+async-trait = { workspace = true }
+bytes = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+roaring = { workspace = true }
+twox-hash = { workspace = true }
+crc32fast = { workspace = true }
+tracing = { workspace = true }
+metrics = { workspace = true }
+thiserror = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

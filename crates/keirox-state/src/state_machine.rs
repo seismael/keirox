@@ -3,7 +3,7 @@
 use keirox_core::error::{KeiroxError, Result};
 use keirox_core::model::{Offset, StreamId};
 use keirox_core::traits::StateOverlayEngine;
-use roaring::RoaringBitmap;
+use roaring::RoaringTreemap;
 use std::collections::HashMap;
 
 /// Default maximum delivery retry attempts before mandatory Virtual DLQ eviction per `KEI-DES-031`.
@@ -78,10 +78,10 @@ pub struct ConsumerGroupState {
     pub max_retries: u32,
     /// Next monotonic lease token counter.
     next_lease_token: u64,
-    /// Roaring Bitmap of acknowledged offsets.
-    acked: RoaringBitmap,
-    /// Roaring Bitmap of evicted DLQ offsets.
-    evicted_dlq: RoaringBitmap,
+    /// 64-bit Roaring Bitmap of acknowledged offsets.
+    acked: RoaringTreemap,
+    /// 64-bit Roaring Bitmap of evicted DLQ offsets.
+    evicted_dlq: RoaringTreemap,
     /// Map of currently active leases (offset -> ActiveLease).
     leases: HashMap<u64, ActiveLease>,
     /// Persistent retry attempt counters per offset.
@@ -95,8 +95,8 @@ impl Default for ConsumerGroupState {
             head_offset: 0,
             max_retries: DEFAULT_MAX_RETRIES,
             next_lease_token: 1,
-            acked: RoaringBitmap::new(),
-            evicted_dlq: RoaringBitmap::new(),
+            acked: RoaringTreemap::new(),
+            evicted_dlq: RoaringTreemap::new(),
             leases: HashMap::new(),
             retry_counts: HashMap::new(),
         }
@@ -120,13 +120,15 @@ impl ConsumerGroupState {
     /// Return the current state for a given offset.
     pub fn get_state(&self, offset: u64) -> ConsumerState {
         if offset < self.base_watermark {
+            if self.evicted_dlq.contains(offset) {
+                return ConsumerState::EvictedDlq;
+            }
             return ConsumerState::Acked;
         }
 
-        let u32_offset = offset as u32;
-        if self.acked.contains(u32_offset) {
+        if self.acked.contains(offset) {
             ConsumerState::Acked
-        } else if self.evicted_dlq.contains(u32_offset) {
+        } else if self.evicted_dlq.contains(offset) {
             ConsumerState::EvictedDlq
         } else if let Some(lease) = self.leases.get(&offset) {
             ConsumerState::Leased {
@@ -140,10 +142,18 @@ impl ConsumerGroupState {
 
     /// Grant a lease on an offset, returning the generated fencing lease token if successful.
     pub fn lease(&mut self, offset: u64, expires_at_us: u64) -> Option<u64> {
-        if self.get_state(offset) == ConsumerState::Ready {
-            let token = self.next_lease_token;
-            self.next_lease_token += 1;
+        let token = self.next_lease_token;
+        self.next_lease_token += 1;
+        if self.lease_with_token(offset, expires_at_us, token) {
+            Some(token)
+        } else {
+            None
+        }
+    }
 
+    /// Grant a lease on an offset with an explicit fencing token (ADR-024).
+    pub fn lease_with_token(&mut self, offset: u64, expires_at_us: u64, token: u64) -> bool {
+        if self.get_state(offset) == ConsumerState::Ready {
             let attempt = self.retry_counts.entry(offset).or_insert(0);
             *attempt += 1;
 
@@ -155,30 +165,38 @@ impl ConsumerGroupState {
                     attempt: *attempt,
                 },
             );
-            Some(token)
+            true
         } else {
-            None
+            false
         }
     }
 
     /// Acknowledge an offset with fencing token validation (ADR-024).
     pub fn ack_fenced(&mut self, offset: u64, token: u64) -> Result<()> {
+        if offset < self.base_watermark || self.acked.contains(offset) {
+            return Ok(());
+        }
+
         if let Some(lease) = self.leases.get(&offset) {
             if lease.token != token {
                 return Err(KeiroxError::Internal(
                     "Stale lease token rejected during ACK".into(),
                 ));
             }
+            self.ack(offset);
+            Ok(())
+        } else {
+            Err(KeiroxError::Internal(
+                "Cannot ACK offset that is not currently leased".into(),
+            ))
         }
-        self.ack(offset);
-        Ok(())
     }
 
     /// Acknowledge an offset unconditionally (terminal state).
     pub fn ack(&mut self, offset: u64) {
         self.leases.remove(&offset);
         self.retry_counts.remove(&offset);
-        self.acked.insert(offset as u32);
+        self.acked.insert(offset);
         self.advance_watermark();
     }
 
@@ -195,7 +213,7 @@ impl ConsumerGroupState {
     pub fn evict_dlq(&mut self, offset: u64) {
         self.leases.remove(&offset);
         self.retry_counts.remove(&offset);
-        self.evicted_dlq.insert(offset as u32);
+        self.evicted_dlq.insert(offset);
         self.advance_watermark();
     }
 
@@ -223,12 +241,11 @@ impl ConsumerGroupState {
     /// Advance monotonic sliding base watermark ($W_{base}$) purging contiguous terminal bits.
     pub fn advance_watermark(&mut self) {
         while self.base_watermark <= self.head_offset {
-            let u32_offset = self.base_watermark as u32;
-            if self.acked.contains(u32_offset) {
-                self.acked.remove(u32_offset);
+            if self.acked.contains(self.base_watermark) {
+                self.acked.remove(self.base_watermark);
                 self.base_watermark += 1;
-            } else if self.evicted_dlq.contains(u32_offset) {
-                self.evicted_dlq.remove(u32_offset);
+            } else if self.evicted_dlq.contains(self.base_watermark) {
+                self.evicted_dlq.remove(self.base_watermark);
                 self.base_watermark += 1;
             } else {
                 break;
@@ -240,8 +257,7 @@ impl ConsumerGroupState {
     pub fn verify_invariants(&self) -> Result<()> {
         // Invariant 1: Disjointness
         for &offset in self.leases.keys() {
-            let u32_offset = offset as u32;
-            if self.acked.contains(u32_offset) || self.evicted_dlq.contains(u32_offset) {
+            if self.acked.contains(offset) || self.evicted_dlq.contains(offset) {
                 return Err(KeiroxError::Internal(
                     "State invariant violation: Leased offset is also Acked or EvictedDlq".into(),
                 ));
@@ -250,7 +266,7 @@ impl ConsumerGroupState {
 
         // Invariant 2: Watermark boundary cleanliness
         if let Some(min_ack) = self.acked.iter().next() {
-            if (min_ack as u64) < self.base_watermark {
+            if min_ack < self.base_watermark {
                 return Err(KeiroxError::Internal(
                     "State invariant violation: Acked bitmap contains bits below base watermark"
                         .into(),
@@ -259,6 +275,22 @@ impl ConsumerGroupState {
         }
 
         Ok(())
+    }
+
+    /// Read-only access to acked Roaring Bitmap.
+    pub fn acked(&self) -> &RoaringTreemap {
+        &self.acked
+    }
+
+    /// Read-only access to evicted DLQ Roaring Bitmap.
+    pub fn evicted_dlq(&self) -> &RoaringTreemap {
+        &self.evicted_dlq
+    }
+
+    /// Set internal bitmaps directly from deserialized snapshot.
+    pub fn set_bitmaps(&mut self, acked: RoaringTreemap, evicted_dlq: RoaringTreemap) {
+        self.acked = acked;
+        self.evicted_dlq = evicted_dlq;
     }
 }
 
@@ -356,5 +388,39 @@ mod tests {
         state.ack(0);
         assert_eq!(state.base_watermark, 2);
         state.verify_invariants().expect("Invariants must hold");
+    }
+
+    #[test]
+    fn test_64bit_large_offsets_without_truncation() {
+        let mut state = ConsumerGroupState::new();
+        // Offset larger than 2^32 (4.5 billion)
+        let large_offset_1: u64 = 4_500_000_000;
+        let large_offset_2: u64 = 4_500_000_001;
+        state.head_offset = 5_000_000_000;
+
+        assert_eq!(state.get_state(large_offset_1), ConsumerState::Ready);
+        let token = state
+            .lease(large_offset_1, 1000)
+            .expect("Lease large offset");
+        assert!(matches!(
+            state.get_state(large_offset_1),
+            ConsumerState::Leased { .. }
+        ));
+
+        state
+            .ack_fenced(large_offset_1, token)
+            .expect("Ack large offset");
+        assert_eq!(state.get_state(large_offset_1), ConsumerState::Acked);
+
+        // Verify that large_offset_2 is still Ready and not collided
+        assert_eq!(state.get_state(large_offset_2), ConsumerState::Ready);
+
+        // Evict to DLQ
+        state.evict_dlq(large_offset_2);
+        assert_eq!(state.get_state(large_offset_2), ConsumerState::EvictedDlq);
+
+        state
+            .verify_invariants()
+            .expect("Invariants must hold for 64-bit offsets");
     }
 }

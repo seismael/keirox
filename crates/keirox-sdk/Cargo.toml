@@ -1,0 +1,25 @@
+[package]
+name = "keirox-sdk"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Native high-performance Arrow Flight and gRPC Client SDK for Keirox per KEI-ARC-024 and KEI-DES-032."
+
+[dependencies]
+keirox-core = { workspace = true }
+keirox-api = { workspace = true }
+keirox-coordinator = { workspace = true }
+async-trait = { workspace = true }
+arrow = { workspace = true }
+arrow-flight = { workspace = true }
+bytes = { workspace = true }
+rand = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tokio = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

@@ -1,10 +1,10 @@
-# KEI-BENCH-001 — Performance Validation Harness Plan
+# KEI-BENCH-101 — Performance Validation Harness Plan
 
 ## 1. Document Control
 
 | Field | Value |
 |---|---|
-| Document ID | KEI-BENCH-001 |
+| Document ID | KEI-BENCH-101 |
 | Title | Performance Validation Harness Plan |
 | Version | 1.0 |
 | Level | Engineering Execution Plan |
@@ -12,9 +12,8 @@
 | Phase | Phase 1 Engineering Bridge (parallel track) |
 | Owner | SRE / Performance Engineering Lead |
 | Governing Plan | KEI-ENG-100 — Phase 1 Engineering Execution Plan |
-| Related Plans | KEI-SPIKE-001 (Prototype), KEI-FORMAL-001 (Formal Validation) |
+| Related Plans | KEI-SPIKE-101 (Prototype), KEI-FORMAL-101 (Formal Validation) |
 | Governing Architecture Documents | KEI-ARC-011 (NFRs), KEI-ARC-020 (Storage), KEI-ARC-021 (State Plane), KEI-ARC-027 (Operability) |
-| Next Plan File | KEI-ORG-001 — Team, Governance, and Delivery Plan |
 
 ---
 
@@ -22,7 +21,7 @@
 
 This document defines the plan for building the **Performance Validation Harness** for the Keirox Polymorphic Event Fabric. 
 
-A benchmark without strict environmental controls, standardized workload profiles, and rigorous statistical reporting is merely a marketing exercise. This plan ensures that all performance, throughput, latency, and resource-utilization claims made during the Phase 1 Prototype (KEI-SPIKE-001) and subsequent phases are scientifically repeatable, empirically proven, and strictly bounded by disclosed hardware and software conditions.
+A benchmark without strict environmental controls, standardized workload profiles, and rigorous statistical reporting is merely a marketing exercise. This plan ensures that all performance, throughput, latency, and resource-utilization claims made during the Phase 1 Prototype (KEI-SPIKE-101) and subsequent phases are scientifically repeatable, empirically proven, and strictly bounded by disclosed hardware and software conditions.
 
 The harness will serve as the single source of truth for all performance evidence gates.
 
@@ -51,9 +50,9 @@ The purpose of this plan is to:
 - Pass/fail threshold definitions.
 
 **Out of scope:**
-- Correctness and invariant checking (owned by KEI-FORMAL-001 and KEI-SPIKE-001).
-- Chaos engineering and failure injection (owned by KEI-OPS-041 and KEI-SPIKE-001).
-- Long-term 72-hour soak testing execution (owned by KEI-SPIKE-001, though this harness provides the tooling).
+- Correctness and invariant checking (owned by KEI-FORMAL-101 and KEI-SPIKE-101).
+- Chaos engineering and failure injection (owned by KEI-OPS-041 and KEI-SPIKE-101).
+- Long-term 72-hour soak testing execution (owned by KEI-SPIKE-101, though this harness provides the tooling).
 
 ---
 
@@ -193,7 +192,7 @@ Every benchmark run MUST follow this strict sequence to ensure statistical valid
 
 ## 9. Pass/Fail Thresholds (Phase 1 Prototype)
 
-These thresholds map directly to the Mandatory Targets defined in KEI-SPIKE-001.
+These thresholds map directly to the Mandatory Targets defined in KEI-SPIKE-101.
 
 | Profile | Metric | Mandatory Target (PASS) | Stretch Target |
 |---|---|---|---|
@@ -207,7 +206,7 @@ These thresholds map directly to the Mandatory Targets defined in KEI-SPIKE-001.
 | **P5-Proto** | Export Interference | p99 jitter ≤ 5% vs P1 | p99 jitter ≤ 2% |
 | **P6-Proto** | Backpressure Engage | Engages before OOM/Disk Full | N/A |
 
-**Normative Rule:** Failing a Mandatory Target blocks the GO decision at the Prototype Evidence Gate (KEI-SPIKE-001 M1.4). Failing a Stretch Target does not block the GO decision but must be documented.
+**Normative Rule:** Failing a Mandatory Target blocks the GO decision at the Prototype Evidence Gate (KEI-SPIKE-101 M1.4). Failing a Stretch Target does not block the GO decision but must be documented.
 
 ---
 

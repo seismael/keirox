@@ -10,6 +10,12 @@ members = [
     "crates/keirox-arrow-elt",
     "crates/keirox-api",
     "crates/keirox-server",
+    "crates/keirox-consensus",
+    "crates/keirox-coordinator",
+    "crates/keirox-tier1",
+    "crates/keirox-schema",
+    "crates/keirox-gateway",
+    "crates/keirox-sdk",
     "crates/keirox-bench",
     "crates/keirox-chaos",
     "crates/keirox-testkit",
@@ -37,11 +43,18 @@ keirox-timer = { path = "crates/keirox-timer", version = "0.1.0" }
 keirox-arena = { path = "crates/keirox-arena", version = "0.1.0" }
 keirox-arrow-elt = { path = "crates/keirox-arrow-elt", version = "0.1.0" }
 keirox-api = { path = "crates/keirox-api", version = "0.1.0" }
+keirox-consensus = { path = "crates/keirox-consensus", version = "0.1.0" }
+keirox-coordinator = { path = "crates/keirox-coordinator", version = "0.1.0" }
+keirox-tier1 = { path = "crates/keirox-tier1", version = "0.1.0" }
+keirox-schema = { path = "crates/keirox-schema", version = "0.1.0" }
+keirox-gateway = { path = "crates/keirox-gateway", version = "0.1.0" }
+keirox-sdk = { path = "crates/keirox-sdk", version = "0.1.0" }
+keirox-bench = { path = "crates/keirox-bench", version = "0.1.0" }
+keirox-chaos = { path = "crates/keirox-chaos", version = "0.1.0" }
 keirox-testkit = { path = "crates/keirox-testkit", version = "0.1.0" }
 
 # Async & Runtime
 tokio = { version = "1.38", features = ["full"] }
-futures = "0.3"
 async-trait = "0.1"
 
 # Serialization, Transcoding & Wire Protocols

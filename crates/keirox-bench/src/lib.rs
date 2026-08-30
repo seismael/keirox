@@ -4,6 +4,11 @@
 
 #![deny(missing_docs)]
 
+/// Benchmark measurement and execution runner.
+pub mod runner;
+
+pub use runner::{BenchmarkResult, BenchmarkRunner};
+
 use std::fmt;
 
 /// Workload profile identifiers matching `KEI-OPS-041`.

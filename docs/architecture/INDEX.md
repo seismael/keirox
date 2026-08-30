@@ -51,7 +51,7 @@ The approved Phase 1 architecture baseline consists of the following 24 formal s
 
 | Document ID | File Path | Status | Scope & Key Invariants |
 |---|---|---|---|
-| **KEI-DES-030** | [`KEI-DES-030.md`](KEI-DES-030.md) | Approved | WAL Binary Framing: 128-byte Batch Headers, 32-byte Record Entries, CRC32C, 4KB page alignment. |
+| **KEI-DES-030** | [`KEI-DES-030.md`](KEI-DES-030.md) | Approved | WAL Binary Framing: 128-byte Batch Headers, 46-byte Record Entries, CRC32C, 4KB page alignment. |
 | **KEI-DES-031** | [`KEI-DES-031.md`](KEI-DES-031.md) | Approved | State Plane Data Structures: `Roaring64Map`, Timing Wheel, watermark algorithm, lease journal. |
 | **KEI-DES-032** | [`KEI-DES-032.md`](KEI-DES-032.md) | Approved | API & Protocol: Protobuf RPC contracts, ACK modes (FAST/DURABLE), error taxonomy, idempotency. |
 | **KEI-DES-033** | [`KEI-DES-033.md`](KEI-DES-033.md) | Approved | Schema Registry: Adaptive inference scoring, 64-field cap, `_unstructured_payload` fallback. |
@@ -96,7 +96,7 @@ When evaluating or resolving technical questions, agents and engineers MUST foll
 Level 1: The Golden Invariant (KEI-ARC-010 §3) & 10 Principles (KEI-ARC-012 §3)
    │
    ▼
-Level 2: Binding Architecture Decision Records (ADRs 001..083 in KEI-ARC-012)
+Level 2: Binding Architecture Decision Records (38 ADRs in KEI-ARC-012)
    │
    ▼
 Level 3: Non-Functional Requirements & Profiles (KEI-ARC-011)
@@ -168,9 +168,8 @@ Before opening a PR or marking any implementation task as complete, verify:
 
 For implementation scheduling, engineering workstreams, prototype plans, formal TLA+ specifications, and risk mitigation, consult [`docs/engineering/README.md`](../engineering/README.md):
 
-- **Master Execution Plan**: [`KEI-ENG-100`](../engineering/KEI-ENG-100.md) (Roadmap M1.0–M1.10)
-- **Vertical Prototype Spike**: [`KEI-SPIKE-001`](../engineering/KEI-SPIKE-001.md) (12-Week Execution Spike)
-- **Formal State Validation**: [`KEI-FORMAL-001`](../engineering/KEI-FORMAL-001.md) (TLA+ Invariant Models)
-- **Performance Harness**: [`KEI-BENCH-001`](../engineering/KEI-BENCH-001.md) (Workload Profiles P1–P6)
-- **Delivery & Governance**: [`KEI-ORG-001`](../engineering/KEI-ORG-001.md) (Team Topology & ARB Charter)
-- **Risk Management**: [`KEI-RISK-001`](../engineering/KEI-RISK-001.md) (5x5 Matrix & Authorized Pivots)
+- **Phase 1 Suite (Single-Node Core Engine)**: [`KEI-ENG-100`](../engineering/KEI-ENG-100.md) (Roadmap M1.0–M1.10), [`KEI-SPIKE-101`](../engineering/KEI-SPIKE-101.md) (12-Week Spike), [`KEI-FORMAL-101`](../engineering/KEI-FORMAL-101.md) (State TLA+), [`KEI-BENCH-101`](../engineering/KEI-BENCH-101.md) (P1–P6 Profiles), [`KEI-RISK-101`](../engineering/KEI-RISK-101.md) (Risk Matrix).
+- **Phase 2 Suite (Distributed Durability & Quorum)**: [`KEI-ENG-200`](../engineering/KEI-ENG-200.md) (Cluster Roadmap), [`KEI-SPIKE-201`](../engineering/KEI-SPIKE-201.md) (Consensus Prototype), [`KEI-FORMAL-201`](../engineering/KEI-FORMAL-201.md) (Raft TLA+), [`KEI-BENCH-201`](../engineering/KEI-BENCH-201.md) (Failover Harness), [`KEI-RISK-201`](../engineering/KEI-RISK-201.md) (Distributed Risks).
+- **Phase 3 Suite (Ecosystem Gateways & Lakehouse)**: [`KEI-ENG-300`](../engineering/KEI-ENG-300.md) (Gateway Roadmap), [`KEI-SPIKE-301`](../engineering/KEI-SPIKE-301.md) (Compatibility Spike), [`KEI-COMPAT-301`](../engineering/KEI-COMPAT-301.md) (Conformance Suites), [`KEI-LAKE-301`](../engineering/KEI-LAKE-301.md) (Iceberg Commits), [`KEI-SDK-301`](../engineering/KEI-SDK-301.md) (Native SDKs), [`KEI-API-301`](../engineering/KEI-API-301.md) (REST/HTTP Gateway), [`KEI-RISK-301`](../engineering/KEI-RISK-301.md) (Ecosystem Risks).
+- **Phase 4 Suite (Enterprise Hardening & Multi-Region)**: [`KEI-ENG-400`](../engineering/KEI-ENG-400.md) (Hardening Roadmap), [`KEI-SPIKE-401`](../engineering/KEI-SPIKE-401.md) (Enterprise Prototype), [`KEI-SEC-401`](../engineering/KEI-SEC-401.md) (Security & Erasure), [`KEI-MR-401`](../engineering/KEI-MR-401.md) (Multi-Region DR), [`KEI-QUEUE-401`](../engineering/KEI-QUEUE-401.md) (Queuing & Delay), [`KEI-VAL-401`](../engineering/KEI-VAL-401.md) (Jepsen Verification), [`KEI-RISK-401`](../engineering/KEI-RISK-401.md) (Enterprise Risks).
+- **Phase 5 Suite (Productization, Distribution & Day-2 Operations)**: [`KEI-ENG-500`](../engineering/KEI-ENG-500.md) (Distribution Roadmap), [`KEI-K8S-501`](../engineering/KEI-K8S-501.md) (K8s Operator & Terraform), [`KEI-MIG-501`](../engineering/KEI-MIG-501.md) (Migration & Bridge), [`KEI-REL-501`](../engineering/KEI-REL-501.md) (Supply Chain & Release), [`KEI-OPS-502`](../engineering/KEI-OPS-502.md) (Observability & Console), [`KEI-RISK-501`](../engineering/KEI-RISK-501.md) (GA Launch Risks).

@@ -7,6 +7,10 @@
 /// Unified single-node runtime coordinator.
 pub mod engine;
 
+/// 3-Node distributed cluster coordinator and fault injection runtime.
+pub mod cluster;
+
+pub use cluster::{ClusterNode, ClusterRuntime, SharedClusterHandle};
 pub use engine::SingleNodeRuntime;
 
 /// Create a test stream identifier from a seed.

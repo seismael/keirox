@@ -7,7 +7,7 @@ This directory contains benchmark execution methodologies, raw telemetry data, a
 ## ⚡ Fast Reference
 
 - **Methodology & Workload Profiles (P1–P6)**: [`docs/architecture/KEI-OPS-041.md`](../architecture/KEI-OPS-041.md)
-- **Harness Architecture & Telemetry Taxonomy**: [`docs/engineering/KEI-BENCH-001.md`](../engineering/KEI-BENCH-001.md)
+- **Harness Architecture & Telemetry Taxonomy**: [`docs/engineering/KEI-BENCH-101.md`](../engineering/KEI-BENCH-101.md)
 - **Implementation Crate**: [`crates/keirox-bench/`](../../crates/keirox-bench/)
 
 ---

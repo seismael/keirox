@@ -55,8 +55,8 @@ fn test_crash_recovery_reconstructs_stream_registry_and_consumer_state() {
     let report = reconciler
         .replay_all(|batch| {
             for record in &batch.records {
-                registry_entry.advance_head(record.logical_offset);
-                consumer_state.head_offset = record.logical_offset;
+                registry_entry.advance_head(record.logical_offset());
+                consumer_state.head_offset = record.logical_offset();
             }
             Ok(())
         })

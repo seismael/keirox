@@ -9,5 +9,8 @@ description = "Roaring Bitmap consumption state plane, lease management, and sli
 [dependencies]
 keirox-core.workspace = true
 roaring.workspace = true
+crc32fast.workspace = true
+serde.workspace = true
+serde_json.workspace = true
 thiserror.workspace = true
 tracing.workspace = true

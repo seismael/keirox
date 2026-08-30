@@ -1,10 +1,10 @@
-# KEI-SPIKE-001 — Minimum Vertical Prototype Plan
+# KEI-SPIKE-101 — Minimum Vertical Prototype Plan
 
 ## 1. Document Control
 
 | Field | Value |
 |---|---|
-| Document ID | KEI-SPIKE-001 |
+| Document ID | KEI-SPIKE-101 |
 | Title | Minimum Vertical Prototype Plan |
 | Version | 1.0 |
 | Level | Engineering Execution Plan |
@@ -14,7 +14,7 @@
 | Owner | Prototype Engineering Lead |
 | Governing Plan | KEI-ENG-100 — Phase 1 Engineering Execution Plan |
 | Governing Architecture Documents | KEI-ARC-010, KEI-ARC-011, KEI-ARC-020, KEI-ARC-021, KEI-ARC-023, KEI-ARC-027, KEI-DES-030, KEI-DES-031, KEI-OPS-041 |
-| Next Plan File | KEI-FORMAL-001 — Formal State Machine Validation Plan |
+| Next Plan File | KEI-FORMAL-101 — Formal State Machine Validation Plan |
 
 ---
 
@@ -1059,7 +1059,7 @@ The prototype is done when:
 After this document, the next planning file is:
 
 ```text
-KEI-FORMAL-001_State_Machine_Validation_Plan.md
+KEI-FORMAL-101.md
 ```
 
 It will define how the state machine, watermark advancement, lease lifecycle, and recovery behavior are formally validated before distributed implementation.

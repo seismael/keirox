@@ -18,14 +18,14 @@ Before generating or modifying any code, verify:
 * **Memory_Hygiene**: Verify zero dynamic heap allocations (`malloc`, `Box`, `Vec::new()`, dynamic closures) in hot write ingress and WAL append loops.
 * **Type_Safety**: Verify 100% strict explicit type declarations in Rust. Zero untyped pointers (`void*`), loose casts, or undocumented `unsafe` blocks.
 * **Hardware_Target**: Systems-level zero-cost abstractions targeting Linux kernel `io_uring` + `O_DIRECT`, local NVMe storage, and Arrow SIMD (AVX-512 / ARM Neon).
-* **Validation_Mapping**: Unit, benchmark, or chaos tests match [`docs/architecture/KEI-OPS-041.md`](docs/architecture/KEI-OPS-041.md) and [`docs/engineering/KEI-BENCH-001.md`](docs/engineering/KEI-BENCH-001.md).
+* **Validation_Mapping**: Unit, benchmark, or chaos tests match [`docs/architecture/KEI-OPS-041.md`](docs/architecture/KEI-OPS-041.md) and [`docs/engineering/KEI-BENCH-101.md`](docs/engineering/KEI-BENCH-101.md).
 
 ### 3. KEIROX_LAYER_ISOLATION
 
 * **Domain_Layer**: Pure distributed models, causal DAG ordering, Roaring Bitmap state machines, and sliding watermark invariants. Zero OS, zero network, zero disk/`io_uring`/S3 dependencies. 100% deterministic and unit-testable in isolation (`crates/keirox-core`, `crates/keirox-state`).
-* **Application_Layer**: Coordinate state transitions. Dispatch commands between Domain and Infrastructure via interfaces (`StorageEngine`, `ConsensusCoordinator`, `CatalogSync`). Manage leases via Hierarchical Timing Wheels (`crates/keirox-timer`, `crates/keirox-arena`).
-* **Infrastructure_Layer**: Implement platform adapters (`io_uring` ring-buffer WAL, Direct NVMe block storage, Apache Arrow/Parquet transcoding, S3 chunk streaming, Raft quorum consensus, Kafka binary framing) (`crates/keirox-wal`, `crates/keirox-index`, `crates/keirox-arrow-elt`).
-* **Presentation_Layer**: Expose client-facing endpoints (Kafka Wire Protocol gateway, SQS/AMQP translator, Native Arrow Flight gRPC server, embedded DataFusion SQL interface) (`crates/keirox-api`, `crates/keirox-server`).
+* **Application_Layer**: Coordinate state transitions. Dispatch commands between Domain and Infrastructure via interfaces (`StorageEngine`, `ConsensusCoordinator`, `CatalogSync`). Manage leases via Hierarchical Timing Wheels (`crates/keirox-timer`, `crates/keirox-arena`, `crates/keirox-coordinator`, `crates/keirox-schema`).
+* **Infrastructure_Layer**: Implement platform adapters (`io_uring` ring-buffer WAL, Direct NVMe block storage, Apache Arrow/Parquet transcoding, S3 chunk streaming, Raft quorum consensus, Kafka binary framing) (`crates/keirox-wal`, `crates/keirox-index`, `crates/keirox-arrow-elt`, `crates/keirox-consensus`, `crates/keirox-tier1`).
+* **Presentation_Layer**: Expose client-facing endpoints (Kafka Wire Protocol gateway, SQS/AMQP translator, Native Arrow Flight gRPC server, embedded DataFusion SQL interface) (`crates/keirox-api`, `crates/keirox-server`, `crates/keirox-sdk`, `crates/keirox-gateway`).
 
 ### 4. HOT_PATH_MEMORY_&_IO_HYGIENE (<2ms SLA)
 

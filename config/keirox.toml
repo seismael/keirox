@@ -1,0 +1,52 @@
+# Keirox Polymorphic Event Fabric - Single Node Runtime Configuration
+# Governing Architecture: KEI-ARC-020, KEI-ARC-021, KEI-ARC-027, KEI-DES-030
+
+[node]
+node_id = 1
+datacenter = "dc-local"
+rack = "rack-01"
+
+[network]
+ingress_port = 9092
+metrics_port = 9090
+listen_addr = "127.0.0.1"
+
+[storage]
+# Path to immutable physical WAL directory
+wal_dir = "data/wal"
+# Physical segment pre-allocation size (64 MB per KEI-DES-030)
+segment_size_bytes = 67108864
+# Page alignment padding (4096 bytes)
+page_size_bytes = 4096
+# Direct I/O kernel bypass flag
+direct_io = true
+# Sync flush durability mode (durable, relaxed)
+sync_mode = "durable"
+
+[state_plane]
+# Default message lease duration in milliseconds
+default_lease_ttl_ms = 30000
+# Maximum redelivery attempts before automatic Virtual DLQ eviction (ADR-004)
+max_retries = 3
+# Hierarchical timing wheel tick interval in milliseconds
+timing_wheel_tick_ms = 1000
+# Sparse offset index sampling interval (records per index checkpoint)
+sparse_index_interval = 4096
+
+[columnar_export]
+# Target directory for Snappy Parquet files
+lakehouse_dir = "data/lakehouse"
+# Maximum rows per Apache Arrow RecordBatch
+batch_size = 65536
+# Parquet compression codec (snappy, zstd, none)
+compression = "snappy"
+# Maximum dynamic schema inferred fields per stream (KEI-DES-033 §4)
+max_inferred_fields = 64
+
+[observability]
+# Metric collection engine (prometheus, json)
+metrics_format = "prometheus"
+# Health probe interval in milliseconds
+health_check_interval_ms = 5000
+# Structured diagnostic event logging level (trace, debug, info, warn, error)
+log_level = "info"

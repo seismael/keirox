@@ -224,7 +224,7 @@ pub struct BatchHeader {
 
 ## 6. Record Entry Format
 
-### 6.1 Record Entry (32 bytes)
+### 6.1 Record Entry (46 bytes)
 
 Each record entry is a lightweight pointer into the payload block. Common fields (producer, schema, tenant) are amortized into the batch header.
 

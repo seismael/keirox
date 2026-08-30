@@ -1,0 +1,28 @@
+[package]
+name = "keirox-consensus"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Two-tier Multi-Raft distributed consensus and quorum replication engine for Keirox"
+
+[dependencies]
+keirox-core = { workspace = true }
+keirox-wal = { workspace = true }
+keirox-state = { workspace = true }
+
+tokio = { workspace = true }
+async-trait = { workspace = true }
+bytes = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+crc32fast = { workspace = true }
+tracing = { workspace = true }
+metrics = { workspace = true }
+thiserror = { workspace = true }
+rand = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

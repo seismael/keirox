@@ -259,22 +259,24 @@ impl BatchHeader {
     }
 }
 
-/// 40-byte Record Entry pointing into payload block per `KEI-DES-030` §6.1.
-#[repr(C)]
+/// 46-byte Record Entry pointing into payload block per `KEI-DES-030` §6.1.
+#[repr(C, packed)]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub struct RecordEntry {
     /// Logical micro-stream identifier.
     pub stream_id: [u8; 16],
     /// Monotonic per-stream logical offset.
     pub logical_offset: u64,
+    /// Delta from batch producer_seq_start.
+    pub producer_seq_delta: u32,
     /// Byte offset into payload block.
     pub payload_offset: u32,
     /// Payload length in bytes.
     pub payload_len: u32,
+    /// Delta from batch timestamp (milliseconds).
+    pub timestamp_delta_ms: u32,
     /// Per-record flags.
     pub record_flags: u16,
-    /// Reserved space for alignment.
-    pub _reserved: u16,
     /// CRC32C of record entry.
     pub record_crc32c: u32,
 }
@@ -291,10 +293,35 @@ impl RecordEntry {
         let mut entry = Self {
             stream_id,
             logical_offset,
+            producer_seq_delta: 0,
             payload_offset,
             payload_len,
+            timestamp_delta_ms: 0,
             record_flags,
-            _reserved: 0,
+            record_crc32c: 0,
+        };
+        entry.record_crc32c = entry.compute_crc();
+        entry
+    }
+
+    /// Create a full record entry with sequence and timestamp deltas.
+    pub fn with_deltas(
+        stream_id: [u8; 16],
+        logical_offset: u64,
+        producer_seq_delta: u32,
+        payload_offset: u32,
+        payload_len: u32,
+        timestamp_delta_ms: u32,
+        record_flags: u16,
+    ) -> Self {
+        let mut entry = Self {
+            stream_id,
+            logical_offset,
+            producer_seq_delta,
+            payload_offset,
+            payload_len,
+            timestamp_delta_ms,
+            record_flags,
             record_crc32c: 0,
         };
         entry.record_crc32c = entry.compute_crc();
@@ -306,15 +333,47 @@ impl RecordEntry {
         let mut hasher = Hasher::new();
         hasher.update(&self.stream_id);
         hasher.update(&self.logical_offset.to_le_bytes());
+        hasher.update(&self.producer_seq_delta.to_le_bytes());
         hasher.update(&self.payload_offset.to_le_bytes());
         hasher.update(&self.payload_len.to_le_bytes());
+        hasher.update(&self.timestamp_delta_ms.to_le_bytes());
         hasher.update(&self.record_flags.to_le_bytes());
         hasher.finalize()
     }
 
     /// Verify record entry integrity.
     pub fn is_valid(&self) -> bool {
-        self.record_crc32c == self.compute_crc()
+        self.compute_crc() == { self.record_crc32c }
+    }
+
+    /// Return the logical offset.
+    pub fn logical_offset(&self) -> u64 {
+        self.logical_offset
+    }
+
+    /// Return the payload length.
+    pub fn payload_len(&self) -> u32 {
+        self.payload_len
+    }
+
+    /// Return the payload offset.
+    pub fn payload_offset(&self) -> u32 {
+        self.payload_offset
+    }
+
+    /// Return the producer sequence delta.
+    pub fn producer_seq_delta(&self) -> u32 {
+        self.producer_seq_delta
+    }
+
+    /// Return the timestamp delta in milliseconds.
+    pub fn timestamp_delta_ms(&self) -> u32 {
+        self.timestamp_delta_ms
+    }
+
+    /// Return the record flags.
+    pub fn record_flags(&self) -> u16 {
+        self.record_flags
     }
 }
 
@@ -357,11 +416,16 @@ mod tests {
 
     #[test]
     fn test_record_entry_layout_and_crc() {
+        assert_eq!(
+            size_of::<RecordEntry>(),
+            46,
+            "RecordEntry must be exactly 46 bytes per KEI-DES-030 §6.1"
+        );
         let stream = [0xAA; 16];
         let record = RecordEntry::new(stream, 42, 0, 1024, 0);
         assert!(record.is_valid());
-        assert_eq!(record.logical_offset, 42);
-        assert_eq!(record.payload_len, 1024);
+        assert_eq!(record.logical_offset(), 42);
+        assert_eq!(record.payload_len(), 1024);
     }
 
     #[test]

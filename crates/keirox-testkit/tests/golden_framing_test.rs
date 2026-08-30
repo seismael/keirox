@@ -42,3 +42,23 @@ fn test_golden_batch_header_binary_layout() {
     assert_eq!(header.payload_crc, 0xDEADBEEF);
     assert!(header.is_valid());
 }
+
+#[test]
+fn test_golden_record_entry_binary_layout() {
+    use keirox_wal::framing::RecordEntry;
+    assert_eq!(
+        size_of::<RecordEntry>(),
+        46,
+        "RecordEntry must be exactly 46 bytes per KEI-DES-030 §6.1"
+    );
+
+    let stream = [0x77; 16];
+    let entry = RecordEntry::with_deltas(stream, 500, 10, 64, 128, 5, 0x0001);
+    assert_eq!(entry.logical_offset(), 500);
+    assert_eq!(entry.producer_seq_delta(), 10);
+    assert_eq!(entry.payload_offset(), 64);
+    assert_eq!(entry.payload_len(), 128);
+    assert_eq!(entry.timestamp_delta_ms(), 5);
+    assert_eq!(entry.record_flags(), 0x0001);
+    assert!(entry.is_valid());
+}

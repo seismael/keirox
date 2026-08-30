@@ -1,0 +1,62 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: keiroxclusters.keirox.io
+spec:
+  group: keirox.io
+  names:
+    kind: KeiroxCluster
+    listKind: KeiroxClusterList
+    plural: keiroxclusters
+    singular: keiroxcluster
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                replicas:
+                  type: integer
+                  minimum: 3
+                storageClassName:
+                  type: string
+                walSizeGb:
+                  type: integer
+                s3Bucket:
+                  type: string
+---
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  name: keiroxstreams.keirox.io
+spec:
+  group: keirox.io
+  names:
+    kind: KeiroxStream
+    listKind: KeiroxStreamList
+    plural: keiroxstreams
+    singular: keiroxstream
+  scope: Namespaced
+  versions:
+    - name: v1alpha1
+      served: true
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                tenantId:
+                  type: string
+                streamName:
+                  type: string
+                retentionHours:
+                  type: integer
