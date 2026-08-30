@@ -150,6 +150,21 @@ The Keirox architecture is formally specified and verified across 25 comprehensi
 
 ---
 
+## 🛠️ Phase 1 Engineering Execution Suite
+
+Phase 1 development is governed by the 6 execution specifications in [`docs/engineering/`](docs/engineering/):
+
+| Document ID | Plan Title | Scope & Purpose |
+|---|---|---|
+| [`KEI-ENG-100`](docs/engineering/KEI-ENG-100.md) | Phase 1 Engineering Execution Plan | Master roadmap, milestones (M1.0–M1.10), workstreams, and DoD. |
+| [`KEI-SPIKE-001`](docs/engineering/KEI-SPIKE-001.md) | Minimum Vertical Prototype Plan | 12-week spike: Single-node WAL, Roaring Bitmaps, leases, ACKs, DLQ, Parquet. |
+| [`KEI-FORMAL-001`](docs/engineering/KEI-FORMAL-001.md) | State Machine Validation Plan | 5 TLA+ models: Lease lifecycle, watermark monotonicity, DLQ progress, test oracles. |
+| [`KEI-BENCH-001`](docs/engineering/KEI-BENCH-001.md) | Performance Validation Harness Plan | Canonical workload profiles (P1-Proto..P6-Proto), telemetry taxonomy, and disclosures. |
+| [`KEI-ORG-001`](docs/engineering/KEI-ORG-001.md) | Team, Governance & Delivery Plan | Team topology, decision matrix, ARB charter, resource and hardware planning. |
+| [`KEI-RISK-001`](docs/engineering/KEI-RISK-001.md) | Risk Reduction & Go/No-Go Plan | 5x5 technical risk matrix, mitigations, Go/No-Go gates, pre-authorized pivots. |
+
+---
+
 ## 🛠️ Getting Started
 
 ### Prerequisites

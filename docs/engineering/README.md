@@ -4,6 +4,21 @@ This directory contains the formal engineering execution plans, technical spikes
 
 ---
 
+## ⚡ Fast Task Routing Map (Token-Optimized)
+
+When working on engineering tasks, agents MUST consult this table to ingest **only the single relevant plan**:
+
+| Active Engineering Task | Primary Plan Document | Key Deliverables & Evidence |
+|---|---|---|
+| **Phase 1 Roadmap & Milestones** | [`KEI-ENG-100.md`](KEI-ENG-100.md) | Milestones M1.0–M1.10, workstreams WS-0..WS-5, DoD. |
+| **Minimum Vertical Prototype (Spike)** | [`KEI-SPIKE-001.md`](KEI-SPIKE-001.md) | 12-week spike: Single-node WAL, Roaring Bitmaps, leases, ACKs, DLQ, Parquet. |
+| **Formal State Machine Validation** | [`KEI-FORMAL-001.md`](KEI-FORMAL-001.md) | 5 TLA+ models: Lease lifecycle, watermark monotonicity, DLQ progress, test oracles. |
+| **Benchmark Harness & Telemetry** | [`KEI-BENCH-001.md`](KEI-BENCH-001.md) | Profiles P1-Proto..P6-Proto, HDR histograms, environmental disclosure. |
+| **Team Topology & ARB Governance** | [`KEI-ORG-001.md`](KEI-ORG-001.md) | Decision matrix, ARB charter, sprint structure, hardware environments. |
+| **Risk Management & Pivot Triggers** | [`KEI-RISK-001.md`](KEI-RISK-001.md) | 5x5 technical risk matrix, mitigations, Go/No-Go gates, pre-authorized pivots. |
+
+---
+
 ## 📋 Engineering Plan Registry
 
 | Document ID | File Path | Scope & Purpose |

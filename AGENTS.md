@@ -5,7 +5,7 @@
 ### 1. DOCUMENTATION_CANONICAL_SOURCE_OF_TRUTH & FAST ROUTING
 
 * **Sole_Authority**: The formal architecture suite in `docs/architecture/` (`KEI-INDEX` through `KEI-VAL-052`) is the sole absolute authority for all system contracts, invariants, binary layouts, protocols, and algorithms.
-* **Fast_Routing_Protocol**: Always consult [`docs/architecture/INDEX.md`](docs/architecture/INDEX.md) §2 to identify the exact L2/L3 document for the active domain. Ingest ONLY the specific governing document (never ingest the full documentation suite) to preserve context economy.
+* **Fast_Routing_Protocol**: For architecture specs, consult [`docs/architecture/INDEX.md`](docs/architecture/INDEX.md) §2. For engineering plans/milestones, consult [`docs/engineering/README.md`](docs/engineering/README.md). Ingest ONLY the specific governing document (never ingest full directories) to preserve context economy.
 * **Immutable_Docs_Lock**: Architecture documents in `docs/architecture/` MUST NOT be modified, refactored, or edited by agents without explicit, prior user authorization.
 * **Zero_Divergence_Policy**: Implementation code, tests, schemas, algorithms, and configurations MUST NEVER diverge from `docs/architecture/`. Lower-level code/crates MUST NOT contradict higher-level architectural invariants (`L0` Vision / `L1` Conceptual).
 * **Contradiction_Escalation_Protocol**: If any ambiguity, gap, or contradiction is detected between specifications or between code and docs, the agent MUST immediately pause, cite the exact document IDs/sections to the developer, and wait for human resolution before proceeding. Never resolve contradictions unilaterally.
@@ -18,7 +18,7 @@ Before generating or modifying any code, verify:
 * **Memory_Hygiene**: Verify zero dynamic heap allocations (`malloc`, `Box`, `Vec::new()`, dynamic closures) in hot write ingress and WAL append loops.
 * **Type_Safety**: Verify 100% strict explicit type declarations in Rust. Zero untyped pointers (`void*`), loose casts, or undocumented `unsafe` blocks.
 * **Hardware_Target**: Systems-level zero-cost abstractions targeting Linux kernel `io_uring` + `O_DIRECT`, local NVMe storage, and Arrow SIMD (AVX-512 / ARM Neon).
-* **Validation_Mapping**: Unit, benchmark, or chaos tests match [`docs/architecture/KEI-OPS-041.md`](docs/architecture/KEI-OPS-041.md).
+* **Validation_Mapping**: Unit, benchmark, or chaos tests match [`docs/architecture/KEI-OPS-041.md`](docs/architecture/KEI-OPS-041.md) and [`docs/engineering/KEI-BENCH-001.md`](docs/engineering/KEI-BENCH-001.md).
 
 ### 3. KEIROX_LAYER_ISOLATION
 
@@ -47,4 +47,4 @@ Before generating or modifying any code, verify:
 
 * **Output**: Dense, targeted fragments, clean code blocks, or minimalist diffs only. Zero conversational preamble, pleasantries, apologies, or trailing restatements.
 * **Diffs**: Bounded searches. Minimal file rewrites using targeted edits.
-* **Context_Economy**: Use [`docs/architecture/INDEX.md`](docs/architecture/INDEX.md) to ingest only the specific L2/L3 module directly related to immediate task execution to prevent token bloat.
+* **Context_Economy**: Ingest only the specific governing L2/L3 spec from [`docs/architecture/INDEX.md`](docs/architecture/INDEX.md) or engineering plan from [`docs/engineering/README.md`](docs/engineering/README.md) directly related to the immediate task.

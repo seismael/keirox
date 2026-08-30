@@ -161,3 +161,16 @@ Before opening a PR or marking any implementation task as complete, verify:
 - [ ] **Fail-Secure Verified**: All edge cases fail closed with explicit domain errors.
 - [ ] **Observability Instrumented**: Metrics, tracing spans, and audit hooks emitted per [`KEI-ARC-027.md`](KEI-ARC-027.md).
 - [ ] **Validation Mapped**: Unit, benchmark, or chaos tests match [`KEI-OPS-041.md`](KEI-OPS-041.md).
+
+---
+
+## 7. Engineering Execution Suite Cross-Reference
+
+For implementation scheduling, engineering workstreams, prototype plans, formal TLA+ specifications, and risk mitigation, consult [`docs/engineering/README.md`](../engineering/README.md):
+
+- **Master Execution Plan**: [`KEI-ENG-100`](../engineering/KEI-ENG-100.md) (Roadmap M1.0–M1.10)
+- **Vertical Prototype Spike**: [`KEI-SPIKE-001`](../engineering/KEI-SPIKE-001.md) (12-Week Execution Spike)
+- **Formal State Validation**: [`KEI-FORMAL-001`](../engineering/KEI-FORMAL-001.md) (TLA+ Invariant Models)
+- **Performance Harness**: [`KEI-BENCH-001`](../engineering/KEI-BENCH-001.md) (Workload Profiles P1–P6)
+- **Delivery & Governance**: [`KEI-ORG-001`](../engineering/KEI-ORG-001.md) (Team Topology & ARB Charter)
+- **Risk Management**: [`KEI-RISK-001`](../engineering/KEI-RISK-001.md) (5x5 Matrix & Authorized Pivots)
