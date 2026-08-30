@@ -7,4 +7,4 @@
 /// Pre-allocated row arenas.
 pub mod arena;
 
-pub use arena::RowArena;
+pub use arena::{RowArena, CACHE_LINE_ALIGNMENT, DEFAULT_ROW_ARENA_CAPACITY};

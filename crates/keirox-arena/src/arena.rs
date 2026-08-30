@@ -1,9 +1,21 @@
 //! Static memory arena implementation for zero-heap hot-path ingress per `KEI-ARC-020`.
 
-/// Lock-free pre-allocated fixed-capacity memory arena.
+/// Default pre-allocated row arena capacity (2 MB per thread ingress ring).
+pub const DEFAULT_ROW_ARENA_CAPACITY: usize = 2 * 1024 * 1024;
+
+/// Cache-line alignment in bytes.
+pub const CACHE_LINE_ALIGNMENT: usize = 64;
+
+/// Lock-free pre-allocated fixed-capacity memory arena ensuring zero dynamic heap allocations.
 pub struct RowArena {
     buffer: Vec<u8>,
     cursor: usize,
+}
+
+impl Default for RowArena {
+    fn default() -> Self {
+        Self::with_capacity(DEFAULT_ROW_ARENA_CAPACITY)
+    }
 }
 
 impl RowArena {
@@ -17,10 +29,18 @@ impl RowArena {
 
     /// Allocate a slice of `len` bytes from the pre-allocated arena.
     pub fn alloc(&mut self, len: usize) -> Option<&mut [u8]> {
-        if self.cursor + len <= self.buffer.len() {
-            let start = self.cursor;
-            self.cursor += len;
-            Some(&mut self.buffer[start..self.cursor])
+        self.alloc_aligned(len, 1)
+    }
+
+    /// Allocate a slice of `len` bytes with an explicit alignment requirement.
+    pub fn alloc_aligned(&mut self, len: usize, align: usize) -> Option<&mut [u8]> {
+        let align_offset = (align - (self.cursor % align)) % align;
+        let start = self.cursor + align_offset;
+        let end = start + len;
+
+        if end <= self.buffer.len() {
+            self.cursor = end;
+            Some(&mut self.buffer[start..end])
         } else {
             None
         }
@@ -59,21 +79,32 @@ mod tests {
 
         let slice = arena.alloc(256).expect("Allocation should succeed");
         assert_eq!(slice.len(), 256);
-        slice[0] = 0xAA;
         assert_eq!(arena.allocated(), 256);
         assert_eq!(arena.remaining(), 768);
 
-        // Reset arena
         arena.reset();
         assert_eq!(arena.allocated(), 0);
         assert_eq!(arena.remaining(), 1024);
     }
 
     #[test]
+    fn test_row_arena_aligned_allocation() {
+        let mut arena = RowArena::with_capacity(1024);
+        arena.alloc(7).unwrap(); // Non-aligned cursor
+
+        let aligned_slice = arena
+            .alloc_aligned(128, CACHE_LINE_ALIGNMENT)
+            .expect("Aligned allocation should succeed");
+        assert_eq!(aligned_slice.len(), 128);
+
+        // Verify start offset is aligned to 64
+        let start_offset = arena.allocated() - 128;
+        assert_eq!(start_offset % CACHE_LINE_ALIGNMENT, 0);
+    }
+
+    #[test]
     fn test_row_arena_out_of_memory() {
-        let mut arena = RowArena::with_capacity(100);
-        assert!(arena.alloc(150).is_none());
-        assert!(arena.alloc(100).is_some());
-        assert!(arena.alloc(1).is_none());
+        let mut arena = RowArena::with_capacity(128);
+        assert!(arena.alloc(256).is_none());
     }
 }

@@ -1,11 +1,12 @@
 //! # Keirox API
 //!
-//! Protocol definitions and RPC contracts for the Keirox runtime.
-//! Governed by `KEI-DES-032` and `KEI-DES-035`.
+//! Client RPC protocols and wire translations per `KEI-DES-032`.
 
 #![deny(missing_docs)]
 
-/// Protocol definitions.
+/// Protocol definitions and request/response messages.
 pub mod proto;
 
-pub use proto::AckMode;
+pub use proto::{
+    AckMode, AcknowledgeRequest, LeaseRecordsRequest, ProduceBatchRequest, ProduceBatchResponse,
+};
