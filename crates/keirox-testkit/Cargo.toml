@@ -16,3 +16,6 @@ keirox-arena.workspace = true
 keirox-arrow-elt.workspace = true
 keirox-api.workspace = true
 bytes.workspace = true
+
+[dev-dependencies]
+tempfile.workspace = true

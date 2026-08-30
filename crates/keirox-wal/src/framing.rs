@@ -116,6 +116,69 @@ impl SegmentHeader {
     }
 }
 
+/// 4096-byte Segment Footer for sealed WAL segment files per `KEI-DES-030` §4.3.
+#[repr(C, align(4096))]
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub struct SegmentFooter {
+    /// Magic identifier (0x4B57414C = 'KWAL').
+    pub magic: u32,
+    /// Monotonic segment identifier matching header.
+    pub segment_id: u64,
+    /// Last physical sequence number committed in segment.
+    pub physical_seq_end: u64,
+    /// Total count of sealed batches in segment.
+    pub batch_count: u32,
+    /// Total record count across all batches.
+    pub record_count: u64,
+    /// Timestamp when segment was sealed in Unix nanoseconds.
+    pub sealed_timestamp_ns: u64,
+    /// CRC32C over footer fields.
+    pub footer_crc32c: u32,
+    /// Reserved space to pad to exactly 4096 bytes.
+    pub reserved: [u8; 4040],
+}
+
+impl SegmentFooter {
+    /// Create a new segment footer for a sealed segment.
+    pub fn new(
+        segment_id: u64,
+        physical_seq_end: u64,
+        batch_count: u32,
+        record_count: u64,
+        sealed_timestamp_ns: u64,
+    ) -> Self {
+        let mut footer = Self {
+            magic: SEGMENT_MAGIC,
+            segment_id,
+            physical_seq_end,
+            batch_count,
+            record_count,
+            sealed_timestamp_ns,
+            footer_crc32c: 0,
+            reserved: [0u8; 4040],
+        };
+        footer.footer_crc32c = footer.compute_crc();
+        footer
+    }
+
+    /// Compute CRC32C over footer fields (excluding CRC itself and padding).
+    pub fn compute_crc(&self) -> u32 {
+        let mut hasher = Hasher::new();
+        hasher.update(&self.magic.to_le_bytes());
+        hasher.update(&self.segment_id.to_le_bytes());
+        hasher.update(&self.physical_seq_end.to_le_bytes());
+        hasher.update(&self.batch_count.to_le_bytes());
+        hasher.update(&self.record_count.to_le_bytes());
+        hasher.update(&self.sealed_timestamp_ns.to_le_bytes());
+        hasher.finalize()
+    }
+
+    /// Verify segment footer validity.
+    pub fn is_valid(&self) -> bool {
+        self.magic == SEGMENT_MAGIC && self.footer_crc32c == self.compute_crc()
+    }
+}
+
 /// 128-byte Batch Header for physical WAL segments per `KEI-DES-030` §5.2.
 #[repr(C, align(64))]
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

@@ -34,9 +34,9 @@ fn test_end_to_end_single_node_pipeline_flow() {
 
     // Lease offset 0, 1, 2 to workers with lease deadlines
     let mut timer_wheel = TimingWheel::new(1000);
-    assert!(consumer_group.lease(0, 1050));
-    assert!(consumer_group.lease(1, 1100));
-    assert!(consumer_group.lease(2, 1050));
+    assert!(consumer_group.lease(0, 1050).is_some());
+    assert!(consumer_group.lease(1, 1100).is_some());
+    assert!(consumer_group.lease(2, 1050).is_some());
 
     timer_wheel.schedule_timeout(0, 1050);
     timer_wheel.schedule_timeout(1, 1100);

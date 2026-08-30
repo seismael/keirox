@@ -8,4 +8,6 @@
 /// State machine definitions and bitset structures.
 pub mod state_machine;
 
-pub use state_machine::{ConsumerGroupState, ConsumerState};
+pub use state_machine::{
+    ActiveLease, ConsumerGroupState, ConsumerState, StateShardKey, DEFAULT_MAX_RETRIES,
+};
