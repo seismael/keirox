@@ -7,5 +7,14 @@
 
 /// WAL batch framing and binary layout structures.
 pub mod framing;
+/// WAL writer engines.
+pub mod writer;
 
-pub use framing::BatchHeader;
+pub use framing::{
+    BatchHeader, RecordEntry, SegmentHeader, BATCH_FLAG_COMPRESSED, BATCH_FLAG_CONTAINS_TOMBSTONES,
+    BATCH_FLAG_ENCRYPTED, BATCH_FLAG_MULTI_STREAM, BATCH_FLAG_RECOVERY_DELTA,
+    BATCH_FLAG_TRANSACTIONAL, BATCH_FLAG_TXN_ABORT, BATCH_FLAG_TXN_COMMIT, BATCH_MAGIC,
+    RECORD_FLAG_CAUSAL_TAG, RECORD_FLAG_SCHEMA_OVERRIDE, RECORD_FLAG_TOMBSTONE, SEGMENT_MAGIC,
+    WAL_FORMAT_VERSION,
+};
+pub use writer::InMemoryWalEngine;

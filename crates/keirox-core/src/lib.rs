@@ -15,6 +15,9 @@
 pub mod error;
 /// Model definitions for streams, offsets, and records.
 pub mod model;
+/// Domain interfaces and traits.
+pub mod traits;
 
 pub use error::{KeiroxError, Result};
 pub use model::{Offset, StreamId, TenantId};
+pub use traits::{StateOverlayEngine, WalEngine};

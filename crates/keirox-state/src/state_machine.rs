@@ -1,5 +1,8 @@
 //! Consumer group state definitions and Roaring Bitmap state overlay per `KEI-ARC-021` and `KEI-DES-031`.
 
+use keirox_core::error::Result;
+use keirox_core::model::{Offset, StreamId};
+use keirox_core::traits::StateOverlayEngine;
 use roaring::RoaringBitmap;
 use std::collections::HashMap;
 
@@ -104,6 +107,31 @@ impl ConsumerGroupState {
     }
 }
 
+impl StateOverlayEngine for ConsumerGroupState {
+    fn grant_lease(&mut self, _stream_id: StreamId, offset: Offset, ttl_us: u64) -> Result<bool> {
+        Ok(self.lease(offset, ttl_us))
+    }
+
+    fn acknowledge(&mut self, _stream_id: StreamId, offset: Offset) -> Result<()> {
+        self.ack(offset);
+        Ok(())
+    }
+
+    fn negative_acknowledge(&mut self, _stream_id: StreamId, offset: Offset) -> Result<()> {
+        self.nack(offset);
+        Ok(())
+    }
+
+    fn evict_to_dlq(&mut self, _stream_id: StreamId, offset: Offset) -> Result<()> {
+        self.evict_dlq(offset);
+        Ok(())
+    }
+
+    fn base_watermark(&self, _stream_id: StreamId) -> Offset {
+        self.base_watermark
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -162,5 +190,15 @@ mod tests {
         // Offset 0 fails and gets evicted to DLQ -> Watermark unblocked and advances to 2!
         state.evict_dlq(0);
         assert_eq!(state.base_watermark, 2);
+    }
+
+    #[test]
+    fn test_state_overlay_engine_trait_implementation() {
+        let mut state = ConsumerGroupState::new();
+        let stream = StreamId([1; 16]);
+
+        assert!(state.grant_lease(stream, 10, 5000).unwrap());
+        assert_eq!(state.base_watermark(stream), 0);
+        state.acknowledge(stream, 10).unwrap();
     }
 }
