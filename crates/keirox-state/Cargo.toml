@@ -1,0 +1,13 @@
+[package]
+name = "keirox-state"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Roaring Bitmap consumption state plane, lease management, and sliding watermarks."
+
+[dependencies]
+keirox-core.workspace = true
+roaring.workspace = true
+thiserror.workspace = true
+tracing.workspace = true

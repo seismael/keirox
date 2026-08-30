@@ -1,0 +1,11 @@
+[package]
+name = "keirox-timer"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Hierarchical Timing Wheel for low-overhead lease expiration and timer management."
+
+[dependencies]
+keirox-core.workspace = true
+tracing.workspace = true

@@ -1,0 +1,12 @@
+[package]
+name = "keirox-arena"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Pre-allocated lock-free row arenas and static ring-buffer registers for zero-allocation hot paths."
+
+[dependencies]
+keirox-core.workspace = true
+bytes.workspace = true
+tracing.workspace = true

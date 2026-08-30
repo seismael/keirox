@@ -1,0 +1,13 @@
+[package]
+name = "keirox-testkit"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Test harness, in-memory fixtures, and assertion helpers for Keirox."
+
+[dependencies]
+keirox-core.workspace = true
+keirox-wal.workspace = true
+keirox-state.workspace = true
+bytes.workspace = true

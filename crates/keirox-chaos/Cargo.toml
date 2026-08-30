@@ -1,0 +1,12 @@
+[package]
+name = "keirox-chaos"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Chaos engineering fault injectors and Jepsen verification suites for Keirox per KEI-OPS-041."
+
+[dependencies]
+keirox-core.workspace = true
+tokio.workspace = true
+tracing.workspace = true

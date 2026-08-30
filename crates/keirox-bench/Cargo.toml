@@ -1,0 +1,14 @@
+[package]
+name = "keirox-bench"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Canonical benchmark suites (P1-P6) for Keirox per KEI-OPS-041."
+
+[dependencies]
+keirox-core.workspace = true
+keirox-wal.workspace = true
+keirox-arena.workspace = true
+tokio.workspace = true
+tracing.workspace = true

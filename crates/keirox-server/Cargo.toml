@@ -1,0 +1,23 @@
+[package]
+name = "keirox-server"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Keirox Distributed Runtime Server Daemon & CLI binary."
+
+[dependencies]
+keirox-core.workspace = true
+keirox-wal.workspace = true
+keirox-index.workspace = true
+keirox-state.workspace = true
+keirox-timer.workspace = true
+keirox-arena.workspace = true
+keirox-arrow-elt.workspace = true
+keirox-api.workspace = true
+tokio.workspace = true
+clap.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+metrics.workspace = true
+metrics-exporter-prometheus.workspace = true

@@ -1,0 +1,16 @@
+[package]
+name = "keirox-arrow-elt"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Internalized columnar ELT, Arrow vectorization, adaptive shredding, and Iceberg catalog integration."
+
+[dependencies]
+keirox-core.workspace = true
+arrow.workspace = true
+parquet.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+tracing.workspace = true
+thiserror.workspace = true

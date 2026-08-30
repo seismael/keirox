@@ -1,0 +1,13 @@
+[package]
+name = "keirox-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+description = "Core domain abstractions, errors, and invariants for Keirox Polymorphic Event Fabric."
+
+[dependencies]
+thiserror.workspace = true
+serde.workspace = true
+bytes.workspace = true
+tracing.workspace = true

@@ -12,11 +12,11 @@ We welcome contributions from systems engineers, distributed systems researchers
 
 The Keirox architecture is formally specified and strictly governed:
 
-1. **Sole Source of Truth**: The architecture specification suite in [`docs/`](docs/) (`KEI-INDEX` through `KEI-VAL-052`) is the canonical authority for all system contracts, memory budgets, data layouts, and protocols.
-2. **Zero Divergence**: Code, tests, schemas, and algorithms MUST NEVER diverge from the specifications in `docs/`.
+1. **Sole Source of Truth**: The architecture specification suite in [`docs/architecture/`](docs/architecture/) (`KEI-INDEX` through `KEI-VAL-052`) is the canonical authority for all system contracts, memory budgets, data layouts, and protocols.
+2. **Zero Divergence**: Code, tests, schemas, and algorithms MUST NEVER diverge from the specifications in `docs/architecture/`.
 3. **The Golden Invariant (KEI-ARC-010 §3)**:
    $$\text{Data is written exactly once to an immutable physical log. Consumption semantics are defined entirely by the consumer's mutable, replicated state overlay.}$$
-4. **Architectural Change Control**: Any change to system behavior, protocols, or contracts MUST first be proposed and approved via an **Architecture Decision Record (ADR)** in [`docs/KEI-ARC-012.md`](docs/KEI-ARC-012.md) before writing implementation code.
+4. **Architectural Change Control**: Any change to system behavior, protocols, or contracts MUST first be proposed and approved via an **Architecture Decision Record (ADR)** in [`docs/architecture/KEI-ARC-012.md`](docs/architecture/KEI-ARC-012.md) before writing implementation code.
 
 ---
 
@@ -112,7 +112,7 @@ Keirox follows the [Conventional Commits](https://www.conventionalcommits.org/) 
 
 ## 5. Pull Request & Review Process
 
-1. **Self-Review**: Audit your diff against [AGENTS.md](AGENTS.md) and the applicable specifications in [`docs/`](docs/).
+1. **Self-Review**: Audit your diff against [AGENTS.md](AGENTS.md) and the applicable specifications in [`docs/architecture/`](docs/architecture/).
 2. **Evidence-Gated PRs**: Performance optimizations or concurrency changes MUST include benchmark or chaos test results comparing before and after.
 3. **Continuous Integration**: All GitHub Actions CI checks (Format, Clippy, Unit Tests, ASan/TSan memory tests) must pass.
 4. **Maintainer Review**: Every PR requires review and approval from at least one subsystem owner and compliance with architectural invariants.

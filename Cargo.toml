@@ -1,0 +1,90 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/keirox-core",
+    "crates/keirox-wal",
+    "crates/keirox-index",
+    "crates/keirox-state",
+    "crates/keirox-timer",
+    "crates/keirox-arena",
+    "crates/keirox-arrow-elt",
+    "crates/keirox-api",
+    "crates/keirox-server",
+    "crates/keirox-bench",
+    "crates/keirox-chaos",
+    "crates/keirox-testkit",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.78"
+authors = ["Keirox Authors & Contributors <maintainers@keirox.io>"]
+license = "Apache-2.0"
+repository = "https://github.com/seismael/keirox"
+homepage = "https://github.com/seismael/keirox"
+readme = "README.md"
+keywords = ["streaming", "queuing", "lakehouse", "arrow", "iceberg"]
+categories = ["database-implementations", "asynchronous", "concurrency"]
+
+[workspace.dependencies]
+# Internal workspace crates
+keirox-core = { path = "crates/keirox-core", version = "0.1.0" }
+keirox-wal = { path = "crates/keirox-wal", version = "0.1.0" }
+keirox-index = { path = "crates/keirox-index", version = "0.1.0" }
+keirox-state = { path = "crates/keirox-state", version = "0.1.0" }
+keirox-timer = { path = "crates/keirox-timer", version = "0.1.0" }
+keirox-arena = { path = "crates/keirox-arena", version = "0.1.0" }
+keirox-arrow-elt = { path = "crates/keirox-arrow-elt", version = "0.1.0" }
+keirox-api = { path = "crates/keirox-api", version = "0.1.0" }
+keirox-testkit = { path = "crates/keirox-testkit", version = "0.1.0" }
+
+# Async & Runtime
+tokio = { version = "1.38", features = ["full"] }
+futures = "0.3"
+async-trait = "0.1"
+
+# Serialization, Transcoding & Wire Protocols
+bytes = "1.6"
+prost = "0.13"
+tonic = "0.12"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+
+# Columnar Data & Lakehouse
+arrow = { version = "54.0", features = ["ipc", "json"] }
+arrow-flight = "54.0"
+parquet = { version = "54.0", features = ["async"] }
+chrono = "=0.4.38"
+
+# Bitmaps, Math & Hashing
+roaring = "0.10"
+crc32fast = "1.4"
+twox-hash = "1.6"
+
+# Tracing, Metrics & Observability
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+metrics = "0.23"
+metrics-exporter-prometheus = "0.15"
+
+# CLI & Configuration
+clap = { version = "4.5", features = ["derive", "env"] }
+config = "0.14"
+thiserror = "1.0"
+
+# Cryptography & Security
+aes-gcm = "0.10"
+rand = "0.8"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[profile.bench]
+opt-level = 3
+debug = true
+lto = "thin"
