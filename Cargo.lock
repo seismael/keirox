@@ -1243,6 +1243,7 @@ dependencies = [
 name = "keirox-testkit"
 version = "0.1.0"
 dependencies = [
+ "arrow",
  "bytes",
  "keirox-api",
  "keirox-arena",
@@ -1252,6 +1253,7 @@ dependencies = [
  "keirox-state",
  "keirox-timer",
  "keirox-wal",
+ "serde_json",
  "tempfile",
 ]
 

@@ -4,6 +4,11 @@
 
 #![deny(missing_docs)]
 
+/// Unified single-node runtime coordinator.
+pub mod engine;
+
+pub use engine::SingleNodeRuntime;
+
 /// Create a test stream identifier from a seed.
 pub fn test_stream_id(seed: u8) -> keirox_core::StreamId {
     keirox_core::StreamId([seed; 16])
