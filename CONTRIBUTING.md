@@ -53,7 +53,7 @@ All implementation code in Keirox must adhere to systems-level engineering disci
 ### 3.2 Setting Up the Repository
 ```bash
 # Clone the repository
-git clone https://github.com/keirox-labs/keirox.git
+git clone https://github.com/seismael/keirox.git
 cd keirox
 
 # Verify toolchain
