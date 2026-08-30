@@ -1238,8 +1238,13 @@ name = "keirox-testkit"
 version = "0.1.0"
 dependencies = [
  "bytes",
+ "keirox-api",
+ "keirox-arena",
+ "keirox-arrow-elt",
  "keirox-core",
+ "keirox-index",
  "keirox-state",
+ "keirox-timer",
  "keirox-wal",
 ]
 

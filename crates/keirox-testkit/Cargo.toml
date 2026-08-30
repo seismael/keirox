@@ -9,5 +9,10 @@ description = "Test harness, in-memory fixtures, and assertion helpers for Keiro
 [dependencies]
 keirox-core.workspace = true
 keirox-wal.workspace = true
+keirox-index.workspace = true
 keirox-state.workspace = true
+keirox-timer.workspace = true
+keirox-arena.workspace = true
+keirox-arrow-elt.workspace = true
+keirox-api.workspace = true
 bytes.workspace = true

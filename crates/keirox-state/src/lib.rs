@@ -8,4 +8,4 @@
 /// State machine definitions and bitset structures.
 pub mod state_machine;
 
-pub use state_machine::ConsumerState;
+pub use state_machine::{ConsumerGroupState, ConsumerState};

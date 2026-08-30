@@ -6,7 +6,11 @@ use clap::Parser;
 use tracing::info;
 
 #[derive(Parser, Debug)]
-#[command(name = "keirox-server", version, about = "Keirox Polymorphic Event Fabric Runtime Daemon")]
+#[command(
+    name = "keirox-server",
+    version,
+    about = "Keirox Polymorphic Event Fabric Runtime Daemon"
+)]
 struct Args {
     /// Path to configuration file
     #[arg(short, long, default_value = "config/keirox.toml")]
