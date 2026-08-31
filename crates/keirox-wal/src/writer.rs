@@ -58,7 +58,7 @@ mod tests {
         let offset = engine.append_batch(stream, &header_bytes).unwrap();
         assert_eq!(offset, 0);
 
-        let read_bytes = engine.read_records(stream, 0, 10).unwrap();
+        let _read_bytes = engine.read_records(stream, 0, 10).unwrap();
     }
 }
 

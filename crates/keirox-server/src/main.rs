@@ -6,7 +6,7 @@
 
 use clap::{Parser, Subcommand};
 use keirox_api::{
-    ConsumerGroupInspectionReport, HealthProbeService, HealthStatus, StreamInspectionReport,
+    HealthProbeService,
     TelemetryRegistry,
 };
 use keirox_core::model::{StreamId, TenantId};
@@ -233,7 +233,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
 
             let default_tenant = TenantId([0u8; 16]);
-            let gateway = Arc::new(keirox_gateway::KafkaGatewayServer::new(
+            let _gateway = Arc::new(keirox_gateway::KafkaGatewayServer::new(
                 Arc::new(ServerClusterIngress),
                 default_tenant,
             ));
