@@ -24,6 +24,8 @@ tracing = { workspace = true }
 metrics = { workspace = true }
 thiserror = { workspace = true }
 rand = { workspace = true }
+aws-sdk-s3 = { workspace = true }
+aws-config = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }

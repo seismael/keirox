@@ -13,3 +13,4 @@ aes-gcm.workspace = true
 rand.workspace = true
 crc32fast.workspace = true
 sha2.workspace = true
+async-trait.workspace = true

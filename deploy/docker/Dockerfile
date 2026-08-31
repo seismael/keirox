@@ -1,22 +1,28 @@
-# Multi-stage production container build for Keirox Server Daemon per KEI-REL-501
-# Uses distroless static base for minimal attack surface and SLSA Level 3 compliance
-
-FROM rust:1.78-bullseye AS builder
+# Use standard rust image for builder
+FROM rust:1.80-bullseye AS builder
 
 WORKDIR /usr/src/keirox
-COPY Cargo.toml Cargo.lock ./
-COPY crates ./crates
 
+# Copy the entire workspace
+COPY . .
+
+# Build the release binary
 RUN cargo build --release --bin keirox-server
 
+# Use a distroless base image for runtime security (nonroot)
 FROM gcr.io/distroless/cc-debian11:nonroot
 
-WORKDIR /app
-COPY --from=builder /usr/src/keirox/target/release/keirox-server /app/keirox-server
-COPY config/keirox.toml /app/config/keirox.toml
+# Copy the compiled binary
+COPY --from=builder /usr/src/keirox/target/release/keirox-server /usr/local/bin/keirox-server
 
-USER nonroot:nonroot
+# Expose ports
+EXPOSE 9092 50051 9090 9091
 
-EXPOSE 9092 9090 50051
+# Run as nonroot
+USER nonroot
 
-ENTRYPOINT ["/app/keirox-server", "start", "--config", "/app/config/keirox.toml"]
+# Use O_DIRECT and io_uring, volume should be mounted at /var/lib/keirox/data
+VOLUME ["/var/lib/keirox/data"]
+
+ENTRYPOINT ["/usr/local/bin/keirox-server"]
+CMD ["start"]

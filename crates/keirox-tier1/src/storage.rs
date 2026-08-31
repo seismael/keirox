@@ -104,3 +104,107 @@ impl ObjectStorageClient for MockObjectStorage {
         Ok(list)
     }
 }
+
+/// S3-compatible object storage implementation for Tier-1 offloading.
+pub struct S3ObjectStorage {
+    client: aws_sdk_s3::Client,
+    bucket: String,
+}
+
+impl S3ObjectStorage {
+    /// Create a new S3ObjectStorage using the default AWS configuration.
+    pub async fn new(bucket: String) -> Self {
+        let config = aws_config::load_defaults(aws_config::BehaviorVersion::latest()).await;
+        let client = aws_sdk_s3::Client::new(&config);
+        Self { client, bucket }
+    }
+}
+
+#[async_trait]
+impl ObjectStorageClient for S3ObjectStorage {
+    async fn put_object(&self, uri: &str, data: Bytes) -> Result<()> {
+        self.client
+            .put_object()
+            .bucket(&self.bucket)
+            .key(uri)
+            .body(data.into())
+            .send()
+            .await
+            .map_err(|e| KeiroxError::Tier1Storage(format!("S3 PutObject error: {}", e)))?;
+        Ok(())
+    }
+
+    async fn get_object(&self, uri: &str) -> Result<Bytes> {
+        let resp = self
+            .client
+            .get_object()
+            .bucket(&self.bucket)
+            .key(uri)
+            .send()
+            .await
+            .map_err(|e| KeiroxError::Tier1Storage(format!("S3 GetObject error: {}", e)))?;
+
+        let data = resp
+            .body
+            .collect()
+            .await
+            .map_err(|e| KeiroxError::Tier1Storage(format!("S3 read error: {}", e)))?
+            .into_bytes();
+
+        Ok(data)
+    }
+
+    async fn delete_object(&self, uri: &str) -> Result<()> {
+        self.client
+            .delete_object()
+            .bucket(&self.bucket)
+            .key(uri)
+            .send()
+            .await
+            .map_err(|e| KeiroxError::Tier1Storage(format!("S3 DeleteObject error: {}", e)))?;
+        Ok(())
+    }
+
+    async fn exists(&self, uri: &str) -> Result<bool> {
+        let resp = self
+            .client
+            .head_object()
+            .bucket(&self.bucket)
+            .key(uri)
+            .send()
+            .await;
+        match resp {
+            Ok(_) => Ok(true),
+            Err(e) => {
+                let err_str = e.to_string();
+                if err_str.contains("NotFound") || err_str.contains("404") {
+                    Ok(false)
+                } else {
+                    Err(KeiroxError::Tier1Storage(format!(
+                        "S3 HeadObject error: {}",
+                        e
+                    )))
+                }
+            }
+        }
+    }
+
+    async fn list_objects(&self, prefix: &str) -> Result<Vec<String>> {
+        let resp = self
+            .client
+            .list_objects_v2()
+            .bucket(&self.bucket)
+            .prefix(prefix)
+            .send()
+            .await
+            .map_err(|e| KeiroxError::Tier1Storage(format!("S3 ListObjects error: {}", e)))?;
+
+        let mut keys = Vec::new();
+        for obj in resp.contents() {
+            if let Some(key) = obj.key() {
+                keys.push(key.to_string());
+            }
+        }
+        Ok(keys)
+    }
+}

@@ -223,12 +223,13 @@ Strategic outcomes:
 
 ## B.13 Delivery Strategy Summary
 
-Four evidence-gated 9-month phases (full criteria in KEI-ARC-011 and KEI-OPS-041):
+Five evidence-gated phases (full criteria in KEI-ARC-011 and KEI-OPS-041):
 
 1. **Phase 1 (M1–9):** Single-node core — multiplexed WAL, bitmap state plane, timing wheel, virtual DLQ, Arrow vectorizer.
 2. **Phase 2 (M10–18):** Distributed durability — data-plane Raft, coordinator sharding, lease journal, S3 offload, crash recovery.
 3. **Phase 3 (M19–27):** Ecosystem bridge — Kafka gateway subset, Arrow Flight SDKs, Iceberg committer, schema registry.
 4. **Phase 4 (M28–36):** Enterprise hardening — KMS crypto-shredding, Mode A multi-region, backup/restore, rolling upgrades, SQS/AMQP subsets, chaos/Jepsen certification.
+5. **Phase 5 (M37–42):** Productization, Distribution & Day-2 Operations — Operator, Helm, Terraform, Migration bridge, Telemetry, and GA Launch.
 
 ## B.14 Glossary (authoritative subset)
 

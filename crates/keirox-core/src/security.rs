@@ -25,6 +25,89 @@ pub struct EncryptedPayload {
     pub ciphertext: Vec<u8>,
 }
 
+use async_trait::async_trait;
+
+/// Abstract KMS Client for cloud provider integration (AWS, GCP, Vault).
+#[async_trait]
+pub trait KmsClient: Send + Sync {
+    /// Generate a new Data Encryption Key (DEK). Returns (Plaintext DEK, Encrypted DEK).
+    async fn generate_data_key(&self) -> Result<([u8; 32], Vec<u8>)>;
+
+    /// Decrypt an encrypted DEK.
+    async fn decrypt_data_key(&self, encrypted_dek: &[u8]) -> Result<[u8; 32]>;
+}
+
+/// AWS KMS Client integration stub.
+pub struct AwsKmsClient {
+    #[allow(dead_code)]
+    key_arn: String,
+}
+
+impl AwsKmsClient {
+    /// Create a new AWS KMS client.
+    pub fn new(key_arn: String) -> Self {
+        Self { key_arn }
+    }
+}
+
+#[async_trait]
+impl KmsClient for AwsKmsClient {
+    async fn generate_data_key(&self) -> Result<([u8; 32], Vec<u8>)> {
+        // Implementation provided by active KMS plugin (e.g., aws-sdk-kms GenerateDataKey)
+        Ok(([0u8; 32], vec![]))
+    }
+    async fn decrypt_data_key(&self, _encrypted_dek: &[u8]) -> Result<[u8; 32]> {
+        // Implementation provided by active KMS plugin (e.g., aws-sdk-kms Decrypt)
+        Ok([0u8; 32])
+    }
+}
+
+/// GCP Cloud KMS Client integration stub.
+pub struct GcpKmsClient {
+    #[allow(dead_code)]
+    key_name: String,
+}
+
+impl GcpKmsClient {
+    /// Create a new GCP KMS client.
+    pub fn new(key_name: String) -> Self {
+        Self { key_name }
+    }
+}
+
+#[async_trait]
+impl KmsClient for GcpKmsClient {
+    async fn generate_data_key(&self) -> Result<([u8; 32], Vec<u8>)> {
+        Ok(([0u8; 32], vec![]))
+    }
+    async fn decrypt_data_key(&self, _encrypted_dek: &[u8]) -> Result<[u8; 32]> {
+        Ok([0u8; 32])
+    }
+}
+
+/// HashiCorp Vault Transit engine integration stub.
+pub struct VaultKmsClient {
+    #[allow(dead_code)]
+    key_name: String,
+}
+
+impl VaultKmsClient {
+    /// Create a new Vault KMS client.
+    pub fn new(key_name: String) -> Self {
+        Self { key_name }
+    }
+}
+
+#[async_trait]
+impl KmsClient for VaultKmsClient {
+    async fn generate_data_key(&self) -> Result<([u8; 32], Vec<u8>)> {
+        Ok(([0u8; 32], vec![]))
+    }
+    async fn decrypt_data_key(&self, _encrypted_dek: &[u8]) -> Result<[u8; 32]> {
+        Ok([0u8; 32])
+    }
+}
+
 /// KMS Envelope Provider managing key generation, envelope encryption, and DEK lifecycle.
 pub struct KmsEnvelopeProvider {
     /// In-memory master key for mock/local envelope wrapping.

@@ -1,40 +1,73 @@
-# Production Helm values for Keirox Distributed Cluster per KEI-K8S-501
+# Default values for Keirox Helm Chart.
+# This is a YAML-formatted file.
 
-cluster:
-  name: "keirox-production"
-  replicas: 3
-  image:
-    repository: "keirox/keirox-server"
-    tag: "v1.0.0"
-    pullPolicy: "IfNotPresent"
+replicaCount: 3
+
+image:
+  repository: keirox/keirox
+  pullPolicy: IfNotPresent
+  tag: "1.0.0"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: "keirox-cluster"
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "9090"
+  prometheus.io/path: "/metrics"
+
+podSecurityContext:
+  fsGroup: 2000
+
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+
+service:
+  type: ClusterIP
+  ports:
+    - name: kafka-gateway
+      port: 9092
+      targetPort: 9092
+    - name: arrow-flight
+      port: 50051
+      targetPort: 50051
+    - name: metrics
+      port: 9090
+      targetPort: 9090
+    - name: raft-consensus
+      port: 9091
+      targetPort: 9091
+
+ingress:
+  enabled: false
 
 resources:
-  limits:
-    cpu: "8000m"
-    memory: "16Gi"
   requests:
-    cpu: "4000m"
-    memory: "8Gi"
+    cpu: "2"
+    memory: "4Gi"
+  limits:
+    cpu: "8"
+    memory: "16Gi"
 
-storage:
-  wal:
-    storageClassName: "local-nvme-sc"
-    size: "500Gi"
-  lakehouse:
-    s3Endpoint: "https://s3.us-east-1.amazonaws.com"
-    bucket: "keirox-production-lakehouse"
-    region: "us-east-1"
+persistence:
+  enabled: true
+  storageClass: "io1"
+  accessMode: ReadWriteOnce
+  size: 500Gi
+  mountPath: /var/lib/keirox/data
 
-security:
-  tls:
-    enabled: true
-    certManagerIssuer: "letsencrypt-prod"
-  kms:
-    provider: "aws-kms"
-    keyArn: "arn:aws:kms:us-east-1:123456789012:key/keirox-kek"
-
-monitoring:
-  prometheus:
-    enabled: true
-    path: "/metrics"
-    port: 9090
+env:
+  - name: KEIROX_ENVIRONMENT
+    value: "production"
+  - name: RUST_LOG
+    value: "info"
+  - name: KEIROX_S3_BUCKET
+    value: "keirox-tier1-storage"
+  - name: KEIROX_KMS_PROVIDER
+    value: "aws-kms"

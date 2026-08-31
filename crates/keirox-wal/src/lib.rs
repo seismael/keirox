@@ -8,6 +8,8 @@
 
 /// WAL batch framing and binary layout structures.
 pub mod framing;
+/// Durable persistent storage for Raft HardState.
+pub mod fsync;
 /// Crash recovery and segment replay reconciliation.
 pub mod recovery;
 /// Physical WAL segment file management and replay.
@@ -22,6 +24,7 @@ pub use framing::{
     BATCH_FLAG_TXN_COMMIT, BATCH_MAGIC, RECORD_FLAG_CAUSAL_TAG, RECORD_FLAG_SCHEMA_OVERRIDE,
     RECORD_FLAG_TOMBSTONE, SEGMENT_MAGIC, WAL_FORMAT_VERSION,
 };
+pub use fsync::FsyncStorage;
 pub use recovery::{RecoveryReconciler, RecoveryReport};
 pub use segment::{ReplayedBatch, SegmentFile, SegmentReader, DEFAULT_SEGMENT_SIZE, PAGE_SIZE};
 pub use writer::InMemoryWalEngine;
