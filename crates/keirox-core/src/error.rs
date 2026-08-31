@@ -56,6 +56,10 @@ pub enum KeiroxError {
     #[error("Audit integrity violation: {0}")]
     AuditIntegrityViolation(String),
 
+    /// Node is not the current leader for the consensus group.
+    #[error("Not leader for consensus group")]
+    NotLeader,
+
     /// Internal error.
     #[error("Internal runtime error: {0}")]
     Internal(String),

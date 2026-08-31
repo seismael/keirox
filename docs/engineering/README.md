@@ -109,4 +109,4 @@ All engineering plans in this directory strictly trace back to the authoritative
 - **NFR Targets**: [`KEI-ARC-011`](../architecture/KEI-ARC-011.md) (PERF, DUR, SCALE, MEM)
 - **Binding Decisions**: [`KEI-ARC-012`](../architecture/KEI-ARC-012.md) (ADR Index)
 - **Detailed Specifications**: [`KEI-DES-030`](../architecture/KEI-DES-030.md) (WAL Framing), [`KEI-DES-031`](../architecture/KEI-DES-031.md) (State Plane Algorithms)
-- **Validation Mapping**: [`KEI-OPS-041`](../architecture/KEI-OPS-041.md) (Test & Chaos Plan), [`KEI-VAL-051`](../architecture/KEI-VAL-051.md) (Requirements Traceability Matrix)
+- **Validation Mapping**: [`KEI-OPS-041`](../architecture/KEI-OPS-041.md) (Test & Chaos Plan), [`KEI-VAL-051`](../architecture/KEI-VAL-051.md) (Requirements Traceability Matrix), [`KEI-VER-001`](../verification/KEI-VER-001.md) (Implementation Verification Protocol)

@@ -30,13 +30,39 @@ impl IcebergCatalogCommitter {
 
     /// Register a table with a target commit cadence mode.
     pub fn register_table(&self, table_name: &str, mode: CommitCadenceMode) {
-        let mut tables = self.tables.write().unwrap();
-        tables
-            .entry(table_name.to_string())
-            .or_insert_with(|| IcebergCatalogLedger::new(table_name));
+        if let Ok(mut tables) = self.tables.write() {
+            tables
+                .entry(table_name.to_string())
+                .or_insert_with(|| IcebergCatalogLedger::new(table_name));
+        }
+        if let Ok(mut modes) = self.commit_modes.write() {
+            modes.insert(table_name.to_string(), mode);
+        }
+    }
 
-        let mut modes = self.commit_modes.write().unwrap();
-        modes.insert(table_name.to_string(), mode);
+    /// Check whether a table is due for a catalog commit based on its configured cadence mode and elapsed time.
+    pub fn should_commit(
+        &self,
+        table_name: &str,
+        current_time_ms: u64,
+        last_commit_time_ms: u64,
+    ) -> Result<bool> {
+        let modes = self
+            .commit_modes
+            .read()
+            .map_err(|_| KeiroxError::Internal("Commit modes lock poisoned".into()))?;
+        let mode = modes
+            .get(table_name)
+            .copied()
+            .unwrap_or(CommitCadenceMode::Standard);
+        let elapsed_ms = current_time_ms.saturating_sub(last_commit_time_ms);
+
+        let threshold_ms = match mode {
+            CommitCadenceMode::Standard => 60_000,
+            CommitCadenceMode::FastStreaming => 5_000,
+        };
+
+        Ok(elapsed_ms >= threshold_ms)
     }
 
     /// Commit a batch of sealed Parquet data files to an Iceberg table ledger with optimistic concurrency check.
@@ -47,7 +73,10 @@ impl IcebergCatalogCommitter {
         new_files: Vec<DataFileEntry>,
         timestamp_ms: u64,
     ) -> Result<CatalogSnapshot> {
-        let mut tables = self.tables.write().unwrap();
+        let mut tables = self
+            .tables
+            .write()
+            .map_err(|_| KeiroxError::Internal("Catalog tables lock poisoned".into()))?;
         let ledger = tables.get_mut(table_name).ok_or_else(|| {
             KeiroxError::Internal(format!(
                 "Table '{table_name}' not registered in Iceberg catalog"
@@ -68,7 +97,10 @@ impl IcebergCatalogCommitter {
 
     /// Expire snapshots older than `retention_cutoff_ms` and prune metadata.
     pub fn expire_snapshots(&self, table_name: &str, retention_cutoff_ms: u64) -> Result<usize> {
-        let mut tables = self.tables.write().unwrap();
+        let mut tables = self
+            .tables
+            .write()
+            .map_err(|_| KeiroxError::Internal("Catalog tables lock poisoned".into()))?;
         let ledger = tables
             .get_mut(table_name)
             .ok_or_else(|| KeiroxError::Internal(format!("Table '{table_name}' not found")))?;
@@ -79,10 +111,32 @@ impl IcebergCatalogCommitter {
 
     /// Query the current snapshot for a table.
     pub fn current_snapshot(&self, table_name: &str) -> Option<CatalogSnapshot> {
-        let tables = self.tables.read().unwrap();
+        let tables = self.tables.read().ok()?;
         tables
             .get(table_name)
             .and_then(|l| l.current_snapshot().cloned())
+    }
+}
+
+impl keirox_core::traits::CatalogSync for IcebergCatalogCommitter {
+    fn register_snapshot(&self, table_name: &str, _snapshot_data: &[u8]) -> Result<u64> {
+        let tables = self
+            .tables
+            .read()
+            .map_err(|_| KeiroxError::Internal("Catalog tables lock poisoned".into()))?;
+        let ledger = tables.get(table_name).ok_or_else(|| {
+            KeiroxError::Internal(format!("Table '{table_name}' not registered in catalog"))
+        })?;
+        Ok(ledger.current_snapshot().map_or(0, |s| s.snapshot_id))
+    }
+
+    fn current_snapshot(&self, table_name: &str) -> Result<Option<Vec<u8>>> {
+        let snap = self.current_snapshot(table_name);
+        Ok(snap.map(|s| serde_json::to_vec(&s).unwrap_or_default()))
+    }
+
+    fn expire_snapshots_before(&self, table_name: &str, cutoff_timestamp_ms: u64) -> Result<usize> {
+        self.expire_snapshots(table_name, cutoff_timestamp_ms)
     }
 }
 

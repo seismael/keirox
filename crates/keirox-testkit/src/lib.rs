@@ -3,6 +3,7 @@
 //! Deterministic test utilities, fixtures, and assertions for Keirox.
 
 #![deny(missing_docs)]
+#![deny(unsafe_code)]
 
 /// Unified single-node runtime coordinator.
 pub mod engine;

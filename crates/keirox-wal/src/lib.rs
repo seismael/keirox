@@ -4,6 +4,7 @@
 //! Follows binary format specifications in `KEI-DES-030`.
 
 #![deny(missing_docs)]
+#![deny(unsafe_code)]
 
 /// WAL batch framing and binary layout structures.
 pub mod framing;

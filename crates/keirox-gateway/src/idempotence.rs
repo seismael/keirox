@@ -53,7 +53,10 @@ impl ProducerIdempotenceTracker {
         }
 
         let key = (producer_id, topic.to_string(), partition);
-        let states = self.states.read().unwrap();
+        let states = match self.states.read() {
+            Ok(guard) => guard,
+            Err(_) => return PreflightResult::Error(KafkaErrorCode::UnknownServerError),
+        };
 
         if let Some(state) = states.get(&key) {
             if epoch < state.epoch {
@@ -92,7 +95,10 @@ impl ProducerIdempotenceTracker {
         }
 
         let key = (producer_id, topic.to_string(), partition);
-        let mut states = self.states.write().unwrap();
+        let mut states = self
+            .states
+            .write()
+            .map_err(|_| KafkaErrorCode::UnknownServerError)?;
 
         if let Some(state) = states.get_mut(&key) {
             if epoch < state.epoch {

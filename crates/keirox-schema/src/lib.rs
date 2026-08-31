@@ -4,6 +4,7 @@
 //! adaptive 64-field columnar shredding governance per `KEI-ARC-024` and `KEI-DES-033`.
 
 #![deny(missing_docs)]
+#![deny(unsafe_code)]
 
 pub mod compatibility;
 pub mod registry;

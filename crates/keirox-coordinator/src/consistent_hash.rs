@@ -67,12 +67,11 @@ impl ConsistentHashRing {
             return;
         }
 
-        for (node_idx, &node) in self.nodes.iter().enumerate() {
+        for &node in &self.nodes {
             for v in 0..self.vnodes_per_node {
                 let vnode_key = format!("node_{}_vnode_{}", node.0, v);
                 let hash = Self::hash_key(&vnode_key);
-                let shard_id =
-                    ShardId(((node_idx * self.vnodes_per_node + v) as u32) % TOTAL_SHARDS);
+                let shard_id = ShardId(((hash >> 32) as u32) % TOTAL_SHARDS);
                 self.ring.insert(hash, (node, shard_id));
             }
         }
@@ -86,14 +85,15 @@ impl ConsistentHashRing {
         }
 
         let hash = Self::hash_key(group_id);
+        let group_shard = ShardId(((hash >> 32) as u32) % TOTAL_SHARDS);
         // Find first ring entry >= hash, or wrap around to first entry in ring
-        let (&_ring_key, &(node_id, shard_id)) = self
+        let (&_ring_key, &(node_id, _)) = self
             .ring
             .range(hash..)
             .next()
             .unwrap_or_else(|| self.ring.iter().next().unwrap());
 
-        Some((shard_id, node_id))
+        Some((group_shard, node_id))
     }
 
     /// Total active nodes in ring.

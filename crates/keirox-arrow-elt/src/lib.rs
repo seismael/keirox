@@ -4,6 +4,7 @@
 //! batches and committing to Apache Iceberg lakehouses per `KEI-ARC-023`, `KEI-DES-033`, and `KEI-DES-034`.
 
 #![deny(missing_docs)]
+#![deny(unsafe_code)]
 
 /// Apache Iceberg catalog commit structures and ledger.
 pub mod catalog;

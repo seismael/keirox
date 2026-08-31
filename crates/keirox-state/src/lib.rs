@@ -4,6 +4,7 @@
 //! Governed by `KEI-ARC-021` and `KEI-DES-031`.
 
 #![deny(missing_docs)]
+#![deny(unsafe_code)]
 
 /// State snapshotting and serialization.
 pub mod snapshot;

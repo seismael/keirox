@@ -2,7 +2,7 @@
 
 use keirox_core::error::Result;
 use keirox_core::model::{Offset, StreamId};
-use keirox_core::traits::WalEngine;
+use keirox_core::traits::StorageEngine;
 use std::collections::HashMap;
 
 /// In-memory WAL engine implementation for tests and prototype verification.
@@ -19,7 +19,7 @@ impl InMemoryWalEngine {
     }
 }
 
-impl WalEngine for InMemoryWalEngine {
+impl StorageEngine for InMemoryWalEngine {
     fn append_batch(&mut self, stream_id: StreamId, batch: &[u8]) -> Result<Offset> {
         let entry = self.streams.entry(stream_id).or_default();
         entry.extend_from_slice(batch);
@@ -53,14 +53,9 @@ mod tests {
         let stream = StreamId([0xEE; 16]);
 
         let batch_header = BatchHeader::new(0, 128, 1, 0, 0, 1000, 0);
-        let header_bytes = unsafe {
-            std::slice::from_raw_parts(
-                &batch_header as *const _ as *const u8,
-                std::mem::size_of::<BatchHeader>(),
-            )
-        };
+        let header_bytes = batch_header.to_bytes();
 
-        let offset = engine.append_batch(stream, header_bytes).unwrap();
+        let offset = engine.append_batch(stream, &header_bytes).unwrap();
         assert_eq!(offset, 0);
 
         let read_bytes = engine.read_records(stream, 0, 10).unwrap();

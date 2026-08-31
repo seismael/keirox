@@ -59,6 +59,36 @@ impl EpochFencedToken {
         }
     }
 
+    /// Full 24-byte lossless binary token representation.
+    #[must_use]
+    pub fn to_bytes(&self) -> [u8; 24] {
+        let mut buf = [0u8; 24];
+        buf[0..4].copy_from_slice(&self.shard_id.0.to_le_bytes());
+        buf[4..12].copy_from_slice(&self.epoch.0.to_le_bytes());
+        buf[12..20].copy_from_slice(&self.offset.to_le_bytes());
+        buf[20..24].copy_from_slice(&self.nonce.to_le_bytes());
+        buf
+    }
+
+    /// Unpack from a 24-byte binary token.
+    #[must_use]
+    pub fn from_bytes(bytes: &[u8; 24]) -> Self {
+        let shard_id = ShardId(u32::from_le_bytes(
+            bytes[0..4].try_into().unwrap_or_default(),
+        ));
+        let epoch = CoordinatorEpoch(u64::from_le_bytes(
+            bytes[4..12].try_into().unwrap_or_default(),
+        ));
+        let offset = u64::from_le_bytes(bytes[12..20].try_into().unwrap_or_default());
+        let nonce = u32::from_le_bytes(bytes[20..24].try_into().unwrap_or_default());
+        Self {
+            shard_id,
+            epoch,
+            offset,
+            nonce,
+        }
+    }
+
     /// Validate that this token is valid for the current active coordinator epoch.
     ///
     /// Per ADR-024: Stale coordinator operations MUST be immediately rejected to prevent double-leases.
@@ -84,6 +114,23 @@ impl EpochFencedToken {
             )));
         }
 
+        Ok(())
+    }
+
+    /// Validate both coordinator epoch and target stream offset binding.
+    pub fn validate_for_offset(
+        &self,
+        expected_shard: ShardId,
+        current_epoch: CoordinatorEpoch,
+        expected_offset: u64,
+    ) -> Result<()> {
+        self.validate(expected_shard, current_epoch)?;
+        if self.offset != expected_offset {
+            return Err(KeiroxError::LeaseConflict(format!(
+                "Token bound offset {} does not match target offset {}",
+                self.offset, expected_offset
+            )));
+        }
         Ok(())
     }
 }
@@ -112,5 +159,29 @@ mod tests {
             .unwrap_err();
         assert!(matches!(err, KeiroxError::EpochFenced(_)));
         assert!(err.to_string().contains("Stale coordinator epoch"));
+    }
+
+    #[test]
+    fn test_epoch_fencing_token_lossless_bytes() {
+        let token = EpochFencedToken::new(
+            ShardId(1023),
+            CoordinatorEpoch(0x1234_5678_9ABC_DEF0),
+            0xDEAD_BEEF_0000_1234,
+            0xFEED_FACE,
+        );
+        let bytes = token.to_bytes();
+        let decoded = EpochFencedToken::from_bytes(&bytes);
+
+        assert_eq!(decoded.shard_id, ShardId(1023));
+        assert_eq!(decoded.epoch, CoordinatorEpoch(0x1234_5678_9ABC_DEF0));
+        assert_eq!(decoded.offset, 0xDEAD_BEEF_0000_1234);
+        assert_eq!(decoded.nonce, 0xFEED_FACE);
+        assert!(decoded
+            .validate_for_offset(
+                ShardId(1023),
+                CoordinatorEpoch(0x1234_5678_9ABC_DEF0),
+                0xDEAD_BEEF_0000_1234
+            )
+            .is_ok());
     }
 }

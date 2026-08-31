@@ -152,6 +152,18 @@ impl RaftLog {
         self.commit_index
     }
 
+    /// Last included snapshot index.
+    #[must_use]
+    pub fn snapshot_index(&self) -> LogIndex {
+        self.last_snapshot_index
+    }
+
+    /// Last included snapshot term.
+    #[must_use]
+    pub fn snapshot_term(&self) -> Term {
+        self.last_snapshot_term
+    }
+
     /// Advance commit index.
     pub fn set_commit_index(&mut self, index: LogIndex) {
         if index.0 > self.commit_index.0 {
@@ -207,7 +219,10 @@ impl RaftLog {
     }
 
     /// Append replicated entries received from leader, resolving log conflicts.
-    pub fn append_replicated(&mut self, _prev_index: LogIndex, entries: Vec<RaftLogEntry>) {
+    pub fn append_replicated(&mut self, prev_index: LogIndex, entries: Vec<RaftLogEntry>) {
+        if prev_index.0 > self.last_log_index().0 {
+            return;
+        }
         for entry in entries {
             if entry.index.0 <= self.last_snapshot_index.0 {
                 continue;

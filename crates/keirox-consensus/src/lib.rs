@@ -1,5 +1,7 @@
 //! Multi-Raft distributed consensus and quorum replication engine for Keirox per `KEI-ARC-022`.
 
+#![deny(unsafe_code)]
+
 pub mod data_plane;
 pub mod engine;
 /// Hybrid Logical Clock for WAN causal ordering.
@@ -14,7 +16,7 @@ pub mod transport;
 pub mod types;
 
 pub use data_plane::DataPlaneRaftGroup;
-pub use engine::RaftEngine;
+pub use engine::{HardState, RaftEngine};
 pub use hlc::{HlcTimestamp, HybridLogicalClock};
 pub use log::{LeaseDeltaRecord, LogPayload, MetadataCommand, RaftLog, RaftLogEntry};
 pub use membership::{MembershipManager, NodeStatus};

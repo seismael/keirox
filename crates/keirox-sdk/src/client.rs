@@ -107,3 +107,67 @@ impl KeiroxClient {
         self.transport.clone()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    struct MockTransport;
+    #[async_trait]
+    impl ClusterClientTransport for MockTransport {
+        async fn produce(
+            &self,
+            _tenant_id: TenantId,
+            _stream_id: StreamId,
+            _records: Vec<Vec<u8>>,
+        ) -> Result<u64> {
+            Ok(100)
+        }
+        async fn lease(
+            &self,
+            _group_id: &str,
+            offset: u64,
+            _ttl_ms: u64,
+            _now_us: u64,
+        ) -> Result<EpochFencedToken> {
+            Ok(EpochFencedToken::new(
+                keirox_coordinator::ShardId(1),
+                keirox_coordinator::CoordinatorEpoch(1),
+                offset,
+                123,
+            ))
+        }
+        async fn ack(&self, _group_id: &str, _token: EpochFencedToken) -> Result<()> {
+            Ok(())
+        }
+        async fn nack(&self, _group_id: &str, _token: EpochFencedToken) -> Result<()> {
+            Ok(())
+        }
+    }
+
+    #[tokio::test]
+    async fn test_sdk_client_factories_and_operations() {
+        let config = KeiroxClientConfig::default();
+        let client = KeiroxClient::new(config, Arc::new(MockTransport));
+
+        let producer = client.producer();
+        let stream = StreamId([0x22; 16]);
+        let offset = producer.send(stream, b"hello".to_vec()).await.unwrap();
+        assert_eq!(offset, 100);
+
+        let queue = client.queue("test-group");
+        let token = queue.lease(100, 5000, 1_700_000_000).await.unwrap();
+        assert_eq!(token.offset, 100);
+
+        queue.ack(token).await.unwrap();
+        queue.nack(token).await.unwrap();
+
+        let mut consumer = client.consumer(stream, 0);
+        assert_eq!(consumer.position(), 0);
+        consumer.seek(42);
+        assert_eq!(consumer.position(), 42);
+
+        let flight = client.flight_reader();
+        let _ = flight;
+    }
+}

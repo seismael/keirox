@@ -79,6 +79,7 @@ pub struct HealthProbeService {
     is_draining: AtomicBool,
     storage_healthy: AtomicBool,
     state_plane_healthy: AtomicBool,
+    memory_healthy: AtomicBool,
 }
 
 impl Default for HealthProbeService {
@@ -96,6 +97,7 @@ impl HealthProbeService {
             is_draining: AtomicBool::new(false),
             storage_healthy: AtomicBool::new(true),
             state_plane_healthy: AtomicBool::new(true),
+            memory_healthy: AtomicBool::new(true),
         }
     }
 
@@ -114,6 +116,11 @@ impl HealthProbeService {
         self.state_plane_healthy.store(healthy, Ordering::Relaxed);
     }
 
+    /// Update memory subsystem health status.
+    pub fn set_memory_healthy(&self, healthy: bool) {
+        self.memory_healthy.store(healthy, Ordering::Relaxed);
+    }
+
     /// Evaluate Liveness (`/livez`): Checks if the core process is alive and responsive.
     #[must_use]
     pub fn check_live(&self) -> ProbeReport {
@@ -122,7 +129,7 @@ impl HealthProbeService {
             uptime_seconds: self.start_time.elapsed().as_secs(),
             storage_writable: self.storage_healthy.load(Ordering::Relaxed),
             state_plane_healthy: self.state_plane_healthy.load(Ordering::Relaxed),
-            memory_healthy: true,
+            memory_healthy: self.memory_healthy.load(Ordering::Relaxed),
             details: vec!["Process alive".to_string()],
         }
     }
@@ -133,6 +140,7 @@ impl HealthProbeService {
         let uptime = self.start_time.elapsed().as_secs();
         let storage = self.storage_healthy.load(Ordering::Relaxed);
         let state = self.state_plane_healthy.load(Ordering::Relaxed);
+        let memory = self.memory_healthy.load(Ordering::Relaxed);
         let draining = self.is_draining.load(Ordering::SeqCst);
 
         let mut details = Vec::new();
@@ -145,6 +153,9 @@ impl HealthProbeService {
         } else if !state {
             details.push("State plane invariant violation or degraded".to_string());
             HealthStatus::Unhealthy
+        } else if !memory {
+            details.push("Memory arena exhausted or high allocation pressure".to_string());
+            HealthStatus::Degraded
         } else {
             details.push("Node is ready for traffic".to_string());
             HealthStatus::Healthy
@@ -155,7 +166,7 @@ impl HealthProbeService {
             uptime_seconds: uptime,
             storage_writable: storage,
             state_plane_healthy: state,
-            memory_healthy: true,
+            memory_healthy: memory,
             details,
         }
     }

@@ -2,7 +2,6 @@
 
 use crate::gateway_server::ClusterIngress;
 use async_trait::async_trait;
-use crc32fast::Hasher as Crc32Hasher;
 use keirox_coordinator::EpochFencedToken;
 use keirox_core::error::{KeiroxError, Result};
 use keirox_core::model::{StreamId, TenantId};
@@ -134,24 +133,32 @@ impl SqsGatewayServer {
             .produce(self.tenant_id, stream_id, vec![payload.clone()])
             .await?;
 
-        let mut hasher = Crc32Hasher::new();
+        use md5::{Digest, Md5};
+        let mut hasher = Md5::new();
         hasher.update(&payload);
-        let checksum = hasher.finalize();
+        let md5_bytes = hasher.finalize();
+        let md5_hex = format!("{:032x}", md5_bytes);
 
         Ok(SqsSendMessageResponse {
-            message_id: format!("msg-{:016x}-{:08x}", offset, checksum),
+            message_id: format!("msg-{:016x}-{}", offset, &md5_hex[0..8]),
             sequence_number: offset,
-            md5_of_body: format!("{:08x}", checksum),
+            md5_of_body: md5_hex,
         })
     }
 
+    /// Helper to resolve consumer group ID from queue URL.
+    #[must_use]
+    pub fn queue_group_id(queue_url: &str) -> String {
+        let queue_name = queue_url.rsplit('/').next().unwrap_or("default");
+        format!("sqs-group-{queue_name}")
+    }
+
     /// Process SQS DeleteMessage operation using receipt handle.
-    pub async fn delete_message(&self, _queue_url: &str, receipt_handle: &str) -> Result<()> {
+    pub async fn delete_message(&self, queue_url: &str, receipt_handle: &str) -> Result<()> {
         let token = Self::decode_receipt_handle(receipt_handle)?;
+        let group_id = Self::queue_group_id(queue_url);
         if let Some(ref provider) = self.lease_provider {
-            provider
-                .ack_queue_offset("sqs-default-group", token)
-                .await?;
+            provider.ack_queue_offset(&group_id, token).await?;
         }
         Ok(())
     }

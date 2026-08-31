@@ -158,12 +158,13 @@ impl CoordinatorNode {
         })?;
 
         // Validate epoch fencing per ADR-024
-        token.validate(shard.shard_id, shard.epoch)?;
+        token.validate_for_offset(shard.shard_id, shard.epoch, token.offset)?;
 
-        let group_state = shard
-            .groups
-            .entry(group_id.to_string())
-            .or_insert_with(ConsumerGroupState::new);
+        let group_state = shard.groups.get_mut(group_id).ok_or_else(|| {
+            KeiroxError::LeaseConflict(format!(
+                "Consumer group '{group_id}' has no active state or leases"
+            ))
+        })?;
         group_state.ack_fenced(token.offset, token.to_u64())?;
 
         let journal = shard
@@ -188,12 +189,13 @@ impl CoordinatorNode {
             ))
         })?;
 
-        token.validate(shard.shard_id, shard.epoch)?;
+        token.validate_for_offset(shard.shard_id, shard.epoch, token.offset)?;
 
-        let group_state = shard
-            .groups
-            .entry(group_id.to_string())
-            .or_insert_with(ConsumerGroupState::new);
+        let group_state = shard.groups.get_mut(group_id).ok_or_else(|| {
+            KeiroxError::LeaseConflict(format!(
+                "Consumer group '{group_id}' has no active state or leases"
+            ))
+        })?;
         group_state.nack(token.offset);
 
         let journal = shard
@@ -250,5 +252,67 @@ impl CoordinatorNode {
         shards.insert(shard_id, new_shard);
 
         Ok(new_epoch)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[tokio::test]
+    async fn test_coordinator_failover_takeover_and_timing_wheel_reconstruction() {
+        let mut ring = ConsistentHashRing::default();
+        ring.add_node(NodeId(1));
+        ring.add_node(NodeId(2));
+
+        let node2 = CoordinatorNode::new(NodeId(2), ring);
+
+        // Prepare failover state for shard 42
+        let shard_id = ShardId(42);
+        let prior_epoch = CoordinatorEpoch(5);
+
+        let mut group_snapshots = HashMap::new();
+        group_snapshots.insert("analytics_group".to_string(), (0u64, Vec::new()));
+
+        let mut deltas = HashMap::new();
+        deltas.insert(
+            "analytics_group".to_string(),
+            vec![
+                LeaseDeltaRecord::Acquire {
+                    offset: 100,
+                    deadline_us: 1_050_000,
+                    token: 1,
+                },
+                LeaseDeltaRecord::Acquire {
+                    offset: 101,
+                    deadline_us: 1_100_000,
+                    token: 2,
+                },
+            ],
+        );
+
+        let new_epoch = node2
+            .failover_takeover_shard(shard_id, prior_epoch, group_snapshots, deltas)
+            .await
+            .expect("Failover takeover should succeed");
+
+        assert_eq!(new_epoch, CoordinatorEpoch(6));
+        assert!(node2.hosts_shard(shard_id).await);
+
+        // Verify timing wheel has reconstructed timeouts
+        let shards = node2.shards.read().await;
+        let shard = shards.get(&shard_id).expect("Shard 42 exists");
+        let wheel = shard
+            .timing_wheels
+            .get("analytics_group")
+            .expect("Timing wheel exists");
+        assert_eq!(wheel.current_tick_us(), 0);
+
+        let mut wheel_clone = keirox_timer::TimingWheel::new(0);
+        wheel_clone.schedule_timeout(100, 1_050_000);
+        wheel_clone.schedule_timeout(101, 1_100_000);
+
+        let expired = wheel_clone.advance_to(1_060_000);
+        assert_eq!(expired, vec![100]);
     }
 }

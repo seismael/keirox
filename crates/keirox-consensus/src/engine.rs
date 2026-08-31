@@ -7,6 +7,7 @@ use crate::rpc::{
 };
 use crate::types::{ClusterConfig, LogIndex, NodeId, ReplicaRole, Term};
 use keirox_core::error::{KeiroxError, Result};
+use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
 
 /// Core Raft consensus state machine.
@@ -384,6 +385,63 @@ impl RaftEngine {
             success: true,
         }
     }
+
+    /// Export persistent HardState for disk/WAL storage (survives crashes/restarts).
+    #[must_use]
+    pub fn hard_state(&self) -> HardState {
+        HardState {
+            current_term: self.current_term,
+            voted_for: self.voted_for,
+            commit_index: self.log.commit_index(),
+            snapshot_index: self.log.snapshot_index(),
+            snapshot_term: self.log.snapshot_term(),
+        }
+    }
+
+    /// Restore persistent HardState on node boot/restart.
+    pub fn restore_hard_state(&mut self, state: HardState) {
+        self.current_term = state.current_term;
+        self.voted_for = state.voted_for;
+        self.log.set_commit_index(state.commit_index);
+        self.log.set_last_applied(state.commit_index);
+        if state.snapshot_index.0 > 0 {
+            self.log
+                .compact_to(state.snapshot_index, state.snapshot_term);
+        }
+    }
+}
+
+/// Persistent Raft state that must survive restarts (Term, VotedFor, CommitIndex).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct HardState {
+    /// Current consensus term.
+    pub current_term: Term,
+    /// Candidate node voted for in current term.
+    pub voted_for: Option<NodeId>,
+    /// Highest log index known to be committed.
+    pub commit_index: LogIndex,
+    /// Last included snapshot index.
+    pub snapshot_index: LogIndex,
+    /// Last included snapshot term.
+    pub snapshot_term: Term,
+}
+
+impl keirox_core::traits::ConsensusCoordinator for RaftEngine {
+    fn propose_command(&self, _command: &[u8]) -> Result<u64> {
+        if !self.is_leader() {
+            return Err(KeiroxError::NotLeader);
+        }
+        // Return next log index for proposal
+        Ok(self.log.last_log_index().next().0)
+    }
+
+    fn is_leader(&self) -> bool {
+        self.role == ReplicaRole::Leader
+    }
+
+    fn current_term(&self) -> u64 {
+        self.current_term.0
+    }
 }
 
 #[cfg(test)]
@@ -461,5 +519,30 @@ mod tests {
         assert_eq!(follower.current_term(), Term(3));
         assert_eq!(follower.commit_index(), LogIndex(100));
         assert_eq!(follower.current_leader(), Some(NodeId(1)));
+    }
+
+    #[test]
+    fn test_raft_hard_state_persistence_and_recovery() {
+        let config = ClusterConfig::three_node(NodeId(1), [2, 3]);
+        let mut node = RaftEngine::new(config.clone());
+
+        // Advance state
+        let _ = node.start_election();
+        assert_eq!(node.current_term(), Term(1));
+        assert_eq!(node.hard_state().voted_for, Some(NodeId(1)));
+
+        // Export state
+        let state = node.hard_state();
+        let serialized = serde_json::to_vec(&state).unwrap();
+
+        // Simulate node crash & restart
+        let mut restored_node = RaftEngine::new(config);
+        assert_eq!(restored_node.current_term(), Term(0));
+
+        let deserialized: HardState = serde_json::from_slice(&serialized).unwrap();
+        restored_node.restore_hard_state(deserialized);
+
+        assert_eq!(restored_node.current_term(), Term(1));
+        assert_eq!(restored_node.hard_state().voted_for, Some(NodeId(1)));
     }
 }

@@ -1,7 +1,7 @@
 //! Lease delta journaling and state machine reconciliation per `KEI-ARC-021` and `KEI-ARC-022`.
 
 use keirox_consensus::LeaseDeltaRecord;
-use keirox_core::error::Result;
+use keirox_core::error::{KeiroxError, Result};
 use keirox_state::ConsumerGroupState;
 use serde::{Deserialize, Serialize};
 
@@ -62,10 +62,15 @@ impl LeaseJournal {
                 deadline_us,
                 token,
             } => {
-                let _ = state.lease_with_token(*offset, *deadline_us, *token);
+                if !state.lease_with_token(*offset, *deadline_us, *token) {
+                    return Err(KeiroxError::LeaseConflict(format!(
+                        "Cannot apply Acquire delta for offset {offset}: current state is {:?}",
+                        state.get_state(*offset)
+                    )));
+                }
             }
             LeaseDeltaRecord::Ack { offset, token } => {
-                let _ = state.ack_fenced(*offset, *token);
+                state.ack_fenced(*offset, *token)?;
             }
             LeaseDeltaRecord::Nack { offset } => {
                 state.nack(*offset);

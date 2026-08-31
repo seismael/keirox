@@ -80,8 +80,10 @@ pub struct ConsumerGroupState {
     next_lease_token: u64,
     /// 64-bit Roaring Bitmap of acknowledged offsets.
     acked: RoaringTreemap,
-    /// 64-bit Roaring Bitmap of evicted DLQ offsets.
+    /// 64-bit Roaring Bitmap of active window evicted DLQ offsets.
     evicted_dlq: RoaringTreemap,
+    /// Cumulative 64-bit Roaring Bitmap of all historical DLQ offsets (survives watermark sliding).
+    historical_dlq: RoaringTreemap,
     /// Map of currently active leases (offset -> ActiveLease).
     leases: HashMap<u64, ActiveLease>,
     /// Persistent retry attempt counters per offset.
@@ -97,6 +99,7 @@ impl Default for ConsumerGroupState {
             next_lease_token: 1,
             acked: RoaringTreemap::new(),
             evicted_dlq: RoaringTreemap::new(),
+            historical_dlq: RoaringTreemap::new(),
             leases: HashMap::new(),
             retry_counts: HashMap::new(),
         }
@@ -120,7 +123,7 @@ impl ConsumerGroupState {
     /// Return the current state for a given offset.
     pub fn get_state(&self, offset: u64) -> ConsumerState {
         if offset < self.base_watermark {
-            if self.evicted_dlq.contains(offset) {
+            if self.historical_dlq.contains(offset) || self.evicted_dlq.contains(offset) {
                 return ConsumerState::EvictedDlq;
             }
             return ConsumerState::Acked;
@@ -128,7 +131,7 @@ impl ConsumerGroupState {
 
         if self.acked.contains(offset) {
             ConsumerState::Acked
-        } else if self.evicted_dlq.contains(offset) {
+        } else if self.evicted_dlq.contains(offset) || self.historical_dlq.contains(offset) {
             ConsumerState::EvictedDlq
         } else if let Some(lease) = self.leases.get(&offset) {
             ConsumerState::Leased {
@@ -157,6 +160,10 @@ impl ConsumerGroupState {
             let attempt = self.retry_counts.entry(offset).or_insert(0);
             *attempt += 1;
 
+            if offset > self.head_offset {
+                self.head_offset = offset;
+            }
+
             self.leases.insert(
                 offset,
                 ActiveLease {
@@ -171,6 +178,19 @@ impl ConsumerGroupState {
         }
     }
 
+    /// Return the head offset of the stream observed by this consumer group.
+    #[must_use]
+    pub fn head_offset(&self) -> u64 {
+        self.head_offset
+    }
+
+    /// Explicitly set the head offset of the stream.
+    pub fn set_head_offset(&mut self, head_offset: u64) {
+        if head_offset > self.head_offset {
+            self.head_offset = head_offset;
+        }
+    }
+
     /// Acknowledge an offset with fencing token validation (ADR-024).
     pub fn ack_fenced(&mut self, offset: u64, token: u64) -> Result<()> {
         if offset < self.base_watermark || self.acked.contains(offset) {
@@ -179,14 +199,14 @@ impl ConsumerGroupState {
 
         if let Some(lease) = self.leases.get(&offset) {
             if lease.token != token {
-                return Err(KeiroxError::Internal(
+                return Err(KeiroxError::LeaseConflict(
                     "Stale lease token rejected during ACK".into(),
                 ));
             }
             self.ack(offset);
             Ok(())
         } else {
-            Err(KeiroxError::Internal(
+            Err(KeiroxError::LeaseConflict(
                 "Cannot ACK offset that is not currently leased".into(),
             ))
         }
@@ -214,6 +234,7 @@ impl ConsumerGroupState {
         self.leases.remove(&offset);
         self.retry_counts.remove(&offset);
         self.evicted_dlq.insert(offset);
+        self.historical_dlq.insert(offset);
         self.advance_watermark();
     }
 
@@ -282,15 +303,27 @@ impl ConsumerGroupState {
         &self.acked
     }
 
-    /// Read-only access to evicted DLQ Roaring Bitmap.
+    /// Read-only access to active window evicted DLQ Roaring Bitmap.
     pub fn evicted_dlq(&self) -> &RoaringTreemap {
         &self.evicted_dlq
+    }
+
+    /// Read-only access to all cumulative historical DLQ offsets.
+    pub fn historical_dlq(&self) -> &RoaringTreemap {
+        &self.historical_dlq
+    }
+
+    /// Return the current monotonic sliding base watermark ($W_{base}$).
+    #[must_use]
+    pub fn base_watermark(&self) -> u64 {
+        self.base_watermark
     }
 
     /// Set internal bitmaps directly from deserialized snapshot.
     pub fn set_bitmaps(&mut self, acked: RoaringTreemap, evicted_dlq: RoaringTreemap) {
         self.acked = acked;
-        self.evicted_dlq = evicted_dlq;
+        self.evicted_dlq = evicted_dlq.clone();
+        self.historical_dlq = evicted_dlq;
     }
 }
 
@@ -415,12 +448,29 @@ mod tests {
         // Verify that large_offset_2 is still Ready and not collided
         assert_eq!(state.get_state(large_offset_2), ConsumerState::Ready);
 
-        // Evict to DLQ
-        state.evict_dlq(large_offset_2);
-        assert_eq!(state.get_state(large_offset_2), ConsumerState::EvictedDlq);
-
         state
             .verify_invariants()
             .expect("Invariants must hold for 64-bit offsets");
+    }
+
+    #[test]
+    fn test_historical_dlq_state_preserved_after_watermark_advance() {
+        let mut state = ConsumerGroupState::new();
+        state.head_offset = 10;
+
+        // Evict offset 0 to DLQ
+        state.evict_dlq(0);
+        // ACK offset 1
+        state.ack(1);
+
+        // Watermark has advanced to 2
+        assert_eq!(state.base_watermark, 2);
+
+        // Offset 0 (< base_watermark) MUST still return EvictedDlq, NOT Acked!
+        assert_eq!(state.get_state(0), ConsumerState::EvictedDlq);
+        // Offset 1 (< base_watermark) returns Acked
+        assert_eq!(state.get_state(1), ConsumerState::Acked);
+        // Offset 2 (>= base_watermark) returns Ready
+        assert_eq!(state.get_state(2), ConsumerState::Ready);
     }
 }

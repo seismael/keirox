@@ -1,5 +1,7 @@
 //! Deterministic coordinator sharding, consistent hashing, and epoch fencing for Keirox per `KEI-ARC-021` and `KEI-ARC-022`.
 
+#![deny(unsafe_code)]
+
 pub mod consistent_hash;
 pub mod coordinator_node;
 pub mod epoch_fencing;

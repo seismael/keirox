@@ -8,7 +8,6 @@ description = "High-performance write-ahead log (WAL) engine with CRC32C integri
 
 [dependencies]
 keirox-core.workspace = true
-bytes.workspace = true
 crc32fast.workspace = true
 tracing.workspace = true
 thiserror.workspace = true

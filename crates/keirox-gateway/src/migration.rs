@@ -78,12 +78,18 @@ impl KafkaMigrationBridge {
 
     /// Current phase of the migration pipeline.
     pub fn current_phase(&self) -> MigrationPhase {
-        *self.phase.read().expect("Migration phase lock poisoned")
+        self.phase
+            .read()
+            .map(|g| *g)
+            .unwrap_or(MigrationPhase::PhaseABridgeReplicating)
     }
 
     /// Advance migration phase.
     pub fn transition_phase(&self, new_phase: MigrationPhase) -> Result<()> {
-        let mut phase = self.phase.write().expect("Migration phase lock poisoned");
+        let mut phase = self
+            .phase
+            .write()
+            .map_err(|_| KeiroxError::Internal("Migration phase lock poisoned".into()))?;
         *phase = new_phase;
         Ok(())
     }
@@ -107,7 +113,7 @@ impl KafkaMigrationBridge {
         let mut mappings = self
             .offset_mappings
             .write()
-            .expect("Offset mappings lock poisoned");
+            .map_err(|_| KeiroxError::Internal("Offset mappings lock poisoned".into()))?;
         let last_kafka_offset = kafka_base_offset + record_count as i64 - 1;
         let last_keirox_offset = assigned_keirox_offset + record_count - 1;
         mappings.insert(
@@ -138,14 +144,14 @@ impl KafkaMigrationBridge {
         let mut counter = self
             .dual_write_counter
             .write()
-            .expect("Dual write counter lock poisoned");
+            .map_err(|_| KeiroxError::Internal("Dual write counter lock poisoned".into()))?;
         let simulated_kafka_offset = *counter as i64;
         *counter += count;
 
         let mut mappings = self
             .offset_mappings
             .write()
-            .expect("Offset mappings lock poisoned");
+            .map_err(|_| KeiroxError::Internal("Offset mappings lock poisoned".into()))?;
         mappings.insert(
             (topic.to_string(), partition),
             (
@@ -167,7 +173,7 @@ impl KafkaMigrationBridge {
         let mappings = self
             .offset_mappings
             .read()
-            .expect("Offset mappings lock poisoned");
+            .map_err(|_| KeiroxError::Internal("Offset mappings lock poisoned".into()))?;
 
         if let Some(&(k_last, kei_last)) = mappings.get(&(topic.to_string(), partition)) {
             if kafka_committed_offset > k_last {
@@ -191,14 +197,11 @@ impl KafkaMigrationBridge {
     pub fn generate_status_report(&self, topic: &str, partition: i32) -> MigrationStatusReport {
         let stream_id = self.derive_stream_id(topic, partition);
         let phase = self.current_phase();
-        let mappings = self
-            .offset_mappings
-            .read()
-            .expect("Offset mappings lock poisoned");
+        let mappings = self.offset_mappings.read().ok();
 
         let (k_high, kei_head) = mappings
-            .get(&(topic.to_string(), partition))
-            .copied()
+            .as_ref()
+            .and_then(|m| m.get(&(topic.to_string(), partition)).copied())
             .unwrap_or((-1, 0));
 
         let offset_lag = if k_high >= 0 && kei_head >= k_high as u64 {
@@ -207,10 +210,7 @@ impl KafkaMigrationBridge {
             0
         };
 
-        let dual_count = *self
-            .dual_write_counter
-            .read()
-            .expect("Dual write counter lock poisoned");
+        let dual_count = self.dual_write_counter.read().map(|g| *g).unwrap_or(0);
 
         MigrationStatusReport {
             tenant_id: self.tenant_id,

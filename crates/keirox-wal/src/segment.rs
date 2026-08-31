@@ -53,15 +53,9 @@ impl SegmentFile {
             .open(&path_buf)?;
 
         let header = SegmentHeader::new(segment_id, volume_id, node_id, physical_seq_start);
-        // SAFETY: `header` is a valid #[repr(C)] POD struct with known size and memory layout.
-        let header_bytes = unsafe {
-            std::slice::from_raw_parts(
-                &header as *const SegmentHeader as *const u8,
-                size_of::<SegmentHeader>(),
-            )
-        };
+        let header_bytes = header.to_bytes();
 
-        file.write_all(header_bytes)?;
+        file.write_all(header_bytes.as_ref())?;
         file.flush()?;
 
         Ok(Self {
@@ -96,28 +90,16 @@ impl SegmentFile {
         let batch_start_offset = self.write_cursor;
 
         // 1. Write 128-byte BatchHeader
-        // SAFETY: `header` is a valid #[repr(C)] POD struct with known size.
-        let header_bytes = unsafe {
-            std::slice::from_raw_parts(
-                header as *const BatchHeader as *const u8,
-                size_of::<BatchHeader>(),
-            )
-        };
-        self.file.write_all(header_bytes)?;
+        let header_bytes = header.to_bytes();
+        self.file.write_all(&header_bytes)?;
 
         // 2. Write RecordEntries
         for record in records {
             if !record.is_valid() {
                 return Err(KeiroxError::Internal("Invalid record entry CRC".into()));
             }
-            // SAFETY: `record` is a valid #[repr(C, packed)] POD struct with known size.
-            let record_bytes = unsafe {
-                std::slice::from_raw_parts(
-                    record as *const RecordEntry as *const u8,
-                    size_of::<RecordEntry>(),
-                )
-            };
-            self.file.write_all(record_bytes)?;
+            let record_bytes = record.to_bytes();
+            self.file.write_all(&record_bytes)?;
         }
 
         // 3. Write Payload Block
@@ -157,16 +139,10 @@ impl SegmentFile {
             sealed_timestamp_ns,
         );
 
-        // SAFETY: `footer` is a valid #[repr(C)] POD struct with known size and memory layout.
-        let footer_bytes = unsafe {
-            std::slice::from_raw_parts(
-                &footer as *const SegmentFooter as *const u8,
-                size_of::<SegmentFooter>(),
-            )
-        };
+        let footer_bytes = footer.to_bytes();
 
         self.file.seek(SeekFrom::Start(self.write_cursor))?;
-        self.file.write_all(footer_bytes)?;
+        self.file.write_all(footer_bytes.as_ref())?;
         self.file.flush()?;
 
         self.sealed = true;
@@ -202,9 +178,7 @@ impl SegmentReader {
         let mut header_buf = vec![0u8; size_of::<SegmentHeader>()];
         file.read_exact(&mut header_buf)?;
 
-        // SAFETY: `header_buf` has length size_of::<SegmentHeader>().
-        let header: SegmentHeader =
-            unsafe { std::ptr::read_unaligned(header_buf.as_ptr() as *const SegmentHeader) };
+        let header = SegmentHeader::from_bytes(&header_buf)?;
 
         if !header.is_valid() {
             return Err(KeiroxError::Internal(
@@ -233,9 +207,10 @@ impl SegmentReader {
                 Err(e) => return Err(e.into()),
             }
 
-            // SAFETY: `header_buf` has length size_of::<BatchHeader>().
-            let batch_header: BatchHeader =
-                unsafe { std::ptr::read_unaligned(header_buf.as_ptr() as *const BatchHeader) };
+            let batch_header = match BatchHeader::from_bytes(&header_buf) {
+                Ok(h) => h,
+                Err(_) => break,
+            };
 
             // Check if we hit unwritten zero padding or footer
             if batch_header.magic != BATCH_MAGIC {
@@ -252,9 +227,7 @@ impl SegmentReader {
             for _ in 0..batch_header.record_count {
                 let mut record_buf = vec![0u8; size_of::<RecordEntry>()];
                 self.file.read_exact(&mut record_buf)?;
-                // SAFETY: `record_buf` has length size_of::<RecordEntry>().
-                let record: RecordEntry =
-                    unsafe { std::ptr::read_unaligned(record_buf.as_ptr() as *const RecordEntry) };
+                let record = RecordEntry::from_bytes(&record_buf)?;
                 if !record.is_valid() {
                     return Err(KeiroxError::Internal(
                         "RecordEntry failed CRC validation during replay".into(),

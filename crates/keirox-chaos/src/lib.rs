@@ -3,6 +3,7 @@
 //! Chaos injection framework and Jepsen verification suites per `KEI-OPS-041`.
 
 #![deny(missing_docs)]
+#![deny(unsafe_code)]
 
 use std::fmt;
 

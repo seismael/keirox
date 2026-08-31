@@ -30,3 +30,5 @@ async-trait.workspace = true
 
 [dev-dependencies]
 tempfile.workspace = true
+keirox-bench.workspace = true
+parquet.workspace = true

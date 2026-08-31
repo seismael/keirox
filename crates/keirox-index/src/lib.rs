@@ -3,6 +3,7 @@
 //! High-density index structures and stream registries.
 
 #![deny(missing_docs)]
+#![deny(unsafe_code)]
 
 /// Packed Stream Registry structures.
 pub mod registry;

@@ -3,6 +3,7 @@
 //! Kafka wire-protocol compatibility gateway per `KEI-ARC-023` and `KEI-DES-035`.
 
 #![deny(missing_docs)]
+#![deny(unsafe_code)]
 
 /// AMQP protocol translation gateway subset.
 pub mod amqp;

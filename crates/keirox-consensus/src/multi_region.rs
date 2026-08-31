@@ -77,15 +77,18 @@ impl MultiRegionReplicator {
 
     /// Current operational role of this region.
     pub fn role(&self) -> RegionRole {
-        *self.role.read().expect("Replicator role lock poisoned")
+        self.role
+            .read()
+            .map(|g| *g)
+            .unwrap_or(RegionRole::SecondaryReplica)
     }
 
     /// Current active regional epoch.
     pub fn epoch(&self) -> RegionEpoch {
-        *self
-            .current_epoch
+        self.current_epoch
             .read()
-            .expect("Replicator epoch lock poisoned")
+            .map(|g| *g)
+            .unwrap_or(RegionEpoch(1))
     }
 
     /// Prepare a batch for cross-region replication (invoked on Primary).
@@ -146,7 +149,7 @@ impl MultiRegionReplicator {
         let mut offsets = self
             .replicated_offsets
             .write()
-            .expect("Replicated offsets lock poisoned");
+            .map_err(|_| KeiroxError::Internal("Replicated offsets lock poisoned".into()))?;
         let last_offset = batch.base_offset + batch.records.len() as u64 - 1;
         offsets.insert(batch.stream_id, last_offset);
 
@@ -155,11 +158,14 @@ impl MultiRegionReplicator {
 
     /// Promote secondary replica to new primary during regional failover.
     pub fn promote_to_primary(&self) -> Result<RegionEpoch> {
-        let mut role = self.role.write().expect("Replicator role lock poisoned");
+        let mut role = self
+            .role
+            .write()
+            .map_err(|_| KeiroxError::Internal("Replicator role lock poisoned".into()))?;
         let mut epoch = self
             .current_epoch
             .write()
-            .expect("Replicator epoch lock poisoned");
+            .map_err(|_| KeiroxError::Internal("Replicator epoch lock poisoned".into()))?;
 
         let new_epoch = epoch.next();
         *epoch = new_epoch;
@@ -170,11 +176,14 @@ impl MultiRegionReplicator {
 
     /// Demote active primary to secondary replica (e.g. after planned switchover or isolation).
     pub fn demote_to_replica(&self, new_epoch: RegionEpoch) -> Result<()> {
-        let mut role = self.role.write().expect("Replicator role lock poisoned");
+        let mut role = self
+            .role
+            .write()
+            .map_err(|_| KeiroxError::Internal("Replicator role lock poisoned".into()))?;
         let mut epoch = self
             .current_epoch
             .write()
-            .expect("Replicator epoch lock poisoned");
+            .map_err(|_| KeiroxError::Internal("Replicator epoch lock poisoned".into()))?;
 
         *epoch = new_epoch;
         *role = RegionRole::SecondaryReplica;

@@ -3,6 +3,7 @@
 //! Lock-free pre-allocated memory arenas for zero-heap-allocation ingress and append loops.
 
 #![deny(missing_docs)]
+#![deny(unsafe_code)]
 
 /// Pre-allocated row arenas.
 pub mod arena;

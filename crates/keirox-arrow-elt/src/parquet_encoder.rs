@@ -11,11 +11,20 @@ use std::path::Path;
 pub struct ParquetEncoder;
 
 impl ParquetEncoder {
-    /// Encode and write an Arrow `RecordBatch` directly to a Parquet file on disk.
+    /// Encode and write an Arrow `RecordBatch` directly to a Parquet file on disk with default Snappy compression.
     pub fn write_batch<P: AsRef<Path>>(batch: &RecordBatch, output_path: P) -> Result<u64> {
+        Self::write_batch_with_compression(batch, output_path, parquet::basic::Compression::SNAPPY)
+    }
+
+    /// Encode and write an Arrow `RecordBatch` to Parquet using a specified compression codec.
+    pub fn write_batch_with_compression<P: AsRef<Path>>(
+        batch: &RecordBatch,
+        output_path: P,
+        compression: parquet::basic::Compression,
+    ) -> Result<u64> {
         let file = File::create(output_path)?;
         let props = WriterProperties::builder()
-            .set_compression(parquet::basic::Compression::SNAPPY)
+            .set_compression(compression)
             .build();
 
         let mut writer = ArrowWriter::try_new(file, batch.schema(), Some(props))
@@ -68,5 +77,28 @@ mod tests {
             total_rows += b.num_rows();
         }
         assert_eq!(total_rows, 2);
+    }
+
+    #[test]
+    fn test_parquet_encoder_multi_codec_support() {
+        let dir = tempdir().unwrap();
+        let mut shredder = AdaptiveShredder::default();
+        let records = vec![
+            serde_json::json!({"metric": "cpu", "value": 95.5}),
+            serde_json::json!({"metric": "mem", "value": 42.0}),
+        ];
+        let batch = shredder.shred_json_records(&records).unwrap();
+
+        for codec in [
+            parquet::basic::Compression::SNAPPY,
+            parquet::basic::Compression::ZSTD(parquet::basic::ZstdLevel::default()),
+            parquet::basic::Compression::LZ4,
+            parquet::basic::Compression::UNCOMPRESSED,
+        ] {
+            let path = dir.path().join(format!("output_{codec:?}.parquet"));
+            let rows = ParquetEncoder::write_batch_with_compression(&batch, &path, codec).unwrap();
+            assert_eq!(rows, 2);
+            assert!(path.exists());
+        }
     }
 }

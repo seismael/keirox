@@ -1,5 +1,7 @@
 //! Tier-1 continuous S3/GCS cloud object storage streaming, multipart uploader, and manifest registry for Keirox per `KEI-ARC-020`.
 
+#![deny(unsafe_code)]
+
 pub mod backlog;
 pub mod manifest;
 pub mod partitioner;

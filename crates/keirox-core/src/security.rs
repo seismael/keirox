@@ -379,33 +379,37 @@ pub struct AuditEvent {
     pub details: String,
 }
 
-/// Chained tamper-evident audit record.
+/// Chained tamper-evident audit record with SHA-256 cryptographic chaining (REQ-SEC-006).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct AuditRecord {
     /// Monotonic sequence index.
     pub sequence: u64,
-    /// Hash of preceding audit record.
-    pub previous_hash: u32,
+    /// 32-byte SHA-256 hash of preceding audit record.
+    pub previous_hash: [u8; 32],
     /// Audit event data.
     pub event: AuditEvent,
-    /// Hash of this audit record.
-    pub record_hash: u32,
+    /// 32-byte SHA-256 hash of this audit record.
+    pub record_hash: [u8; 32],
 }
 
 impl AuditRecord {
-    /// Compute the checksum hash of this audit record.
+    /// Genesis block previous hash constant.
+    pub const GENESIS_HASH: [u8; 32] = [0x5A; 32];
+
+    /// Compute the cryptographic SHA-256 hash of this audit record.
     #[must_use]
-    pub fn compute_hash(&self) -> u32 {
-        let mut hasher = Crc32Hasher::new();
-        hasher.update(&self.sequence.to_le_bytes());
-        hasher.update(&self.previous_hash.to_le_bytes());
-        hasher.update(&self.event.timestamp_ns.to_le_bytes());
+    pub fn compute_hash(&self) -> [u8; 32] {
+        use sha2::{Digest, Sha256};
+        let mut hasher = Sha256::new();
+        hasher.update(self.sequence.to_le_bytes());
+        hasher.update(self.previous_hash);
+        hasher.update(self.event.timestamp_ns.to_le_bytes());
         hasher.update(self.event.principal_id.as_bytes());
-        hasher.update(&self.event.tenant_id.0);
+        hasher.update(self.event.tenant_id.0);
         hasher.update(self.event.resource.as_bytes());
         hasher.update(self.event.outcome.as_bytes());
         hasher.update(self.event.details.as_bytes());
-        hasher.finalize()
+        hasher.finalize().into()
     }
 }
 
@@ -430,13 +434,15 @@ impl AuditTrailLedger {
             .map_err(|_| KeiroxError::Internal("AuditTrailLedger lock poisoned".into()))?;
 
         let sequence = records.len() as u64;
-        let previous_hash = records.last().map_or(0xCAFE_BABE, |r| r.record_hash);
+        let previous_hash = records
+            .last()
+            .map_or(AuditRecord::GENESIS_HASH, |r| r.record_hash);
 
         let mut record = AuditRecord {
             sequence,
             previous_hash,
             event,
-            record_hash: 0,
+            record_hash: [0u8; 32],
         };
         record.record_hash = record.compute_hash();
 
@@ -444,14 +450,14 @@ impl AuditTrailLedger {
         Ok(sequence)
     }
 
-    /// Verify the complete cryptographic hash chain of the audit trail.
+    /// Verify the complete cryptographic SHA-256 hash chain of the audit trail.
     pub fn verify_integrity(&self) -> Result<()> {
         let records = self
             .records
             .read()
             .map_err(|_| KeiroxError::Internal("AuditTrailLedger lock poisoned".into()))?;
 
-        let mut expected_prev_hash = 0xCAFE_BABE;
+        let mut expected_prev_hash = AuditRecord::GENESIS_HASH;
         for (idx, record) in records.iter().enumerate() {
             if record.sequence != idx as u64 {
                 return Err(KeiroxError::Internal(format!(

@@ -20,6 +20,7 @@ thiserror = { workspace = true }
 tokio = { workspace = true }
 tracing = { workspace = true }
 twox-hash = { workspace = true }
+md-5 = { workspace = true }
 
 [dev-dependencies]
 tempfile = { workspace = true }

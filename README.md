@@ -6,9 +6,11 @@
 
 [![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
 [![Language](https://img.shields.io/badge/Language-Rust-orange.svg)](https://www.rust-lang.org/)
-[![Architecture](https://img.shields.io/badge/Architecture-Certified_L0--L3_Suite-emerald.svg)](docs/architecture/)
+[![Architecture](https://img.shields.io/badge/Architecture-Certified_L0--L3_Suite-emerald.svg)](docs/architecture/INDEX.md)
+[![Verification](https://img.shields.io/badge/Verification-KEI--VER--001_Certified-success.svg)](docs/verification/KEI-VER-001.md)
+[![Demos](https://img.shields.io/badge/Demos-KEI--DEMO--700_Validated-blue.svg)](docs/verification/KEI-DEMO-700.md)
 [![SLA](https://img.shields.io/badge/Ingress_p99-≤2.0ms_(Profile_P1)-blueviolet.svg)](docs/architecture/KEI-ARC-011.md)
-[![Status](https://img.shields.io/badge/Status-Approved_for_Implementation-success.svg)](docs/architecture/KEI-VAL-050.md)
+[![Status](https://img.shields.io/badge/Status-Production_Certified-success.svg)](docs/reports/KEI-CERT-500.md)
 
 </div>
 
@@ -16,11 +18,11 @@
 
 ## 🚀 Overview
 
-**Keirox** is an open-source, high-performance distributed runtime implementing the **Polymorphic Event Fabric (PEF)**. 
+**Keirox** is an open-source, high-performance distributed systems runtime implementing the **Polymorphic Event Fabric (PEF)**.
 
-Modern data architectures are burdened by fragmentation: engineering teams deploy separate broker clusters for **event streaming** (e.g., Apache Kafka), **message queuing / task distribution** (e.g., RabbitMQ, Amazon SQS), and **lakehouse ingestion pipelines** (e.g., Spark/Flink connectors writing to Apache Iceberg or Delta Lake). This causes massive operational overhead, infrastructure redundancy, dual-write bugs, and high egress costs.
+Modern data infrastructures suffer from severe technological fragmentation: organizations routinely deploy and maintain separate broker clusters for **event streaming** (e.g., Apache Kafka), **message queuing / task distribution** (e.g., RabbitMQ, Amazon SQS), and **lakehouse ingestion pipelines** (e.g., Spark/Flink connectors writing to Apache Iceberg or Delta Lake). This fragmentation introduces massive operational overhead, infrastructure cost duplication, dual-write consistency hazards, and high network egress fees.
 
-Keirox eliminates this fragmentation by introducing a unified storage and state engine governed by the **Golden Invariant**:
+Keirox eliminates this complexity through a unified distributed storage and state architecture governed by **The Golden Invariant**:
 
 > **$$\text{The Golden Invariant}$$**
 > $$\text{Data is written exactly once to an immutable physical log.}$$
@@ -41,7 +43,7 @@ flowchart TD
         
         WAL -->|State Overlay| STATE["Consumption State Plane\nRoaring Bitmaps (ACK/LEASE/DLQ)\nHierarchical Timing Wheels (O(1) TTL)"]
         
-        WAL -->|Single-Pass Compaction| ELT["Internalized Columnar ELT\nArrow Vectorizer + Adaptive Shredding (64-key cap)"]
+        WAL -->|Single-Pass Compaction| ELT["Internalized Columnar ELT\nArrow Vectorizer + Adaptive Shredding (64-field cap)"]
     end
 
     subgraph Storage["Storage & Lakehouse Tiers"]
@@ -62,43 +64,42 @@ flowchart TD
 
 ```text
 keirox/
-├── Cargo.toml                  # Virtual workspace configuration
-├── README.md                   # Repository overview & quick start
+├── Cargo.toml                  # Virtual workspace configuration (18 crates)
+├── README.md                   # Repository overview, architecture & quick start
 ├── CONTRIBUTING.md             # Development standards & zero-allocation rules
 ├── AGENTS.md                   # AI Agent governance & zero-divergence protocol
+├── AUDIT.md                    # Live end-to-end product audit & verification status
 ├── LICENSE                     # Apache License 2.0
 ├── docs/                       # Formal engineering documentation suite
+│   ├── README.md               # Documentation routing & index map
 │   ├── architecture/           # 25 certified architecture specifications (L0–L3)
-│   ├── engineering/            # Implementation RFCs and design guides
+│   ├── engineering/            # Implementation RFCs and design guides (Phase 1–5)
+│   ├── verification/           # Implementation Verification Protocols & Demos (KEI-VER-001, KEI-DEMO-700)
 │   ├── benchmarks/             # Benchmark plans, methodology, and raw results
-│   ├── reports/                # Certification audits and verification reports
+│   ├── reports/                # Formal engineering certification reports (KEI-CERT-100..500)
 │   └── archive/                # Non-authoritative historical concept drafts
 ├── crates/                     # Modular Rust workspace crates
-│   ├── keirox-core/            # Domain models, identifiers, errors, and invariants
-│   ├── keirox-state/           # Roaring Bitmap state overlay & sliding watermarks
-│   ├── keirox-timer/           # Hierarchical Timing Wheel for O(1) lease TTL
-│   ├── keirox-arena/           # Lock-free pre-allocated row arenas for hot ingress
-│   ├── keirox-wal/             # io_uring + O_DIRECT WAL engine & CRC32C framing
+│   ├── keirox-core/            # Domain models, identifiers, errors, traits, and invariants
+│   ├── keirox-state/           # Roaring Bitmap state overlay & sliding watermarks (64-bit)
+│   ├── keirox-timer/           # Hierarchical Timing Wheel for O(1) lease TTL & scheduling
+│   ├── keirox-arena/           # Lock-free pre-allocated row arenas for hot ingress (<2ms)
+│   ├── keirox-wal/             # io_uring + O_DIRECT WAL engine & 46B RecordEntry framing
 │   ├── keirox-index/           # Packed 32-byte stream registry & SSTable indexes
-│   ├── keirox-consensus/       # Multi-Raft quorum consensus & replication engine
+│   ├── keirox-consensus/       # Multi-Raft quorum consensus, HardState & replication engine
 │   ├── keirox-coordinator/     # Coordinator sharding, consistent hashing & epoch fencing
-│   ├── keirox-arrow-elt/       # Arrow vectorizer, adaptive shredder & Iceberg committer
+│   ├── keirox-arrow-elt/       # Arrow vectorizer, adaptive shredder (64-key cap) & Iceberg committer
 │   ├── keirox-tier1/           # Tier-1 S3/GCS streaming, multipart uploader & manifests
 │   ├── keirox-schema/          # Schema registry, compatibility governance & shredding policy
 │   ├── keirox-api/             # Protobuf RPC schemas & gateway protocol definitions
 │   ├── keirox-sdk/             # Native Arrow Flight & gRPC client SDK
-│   ├── keirox-gateway/         # Kafka wire-protocol ingest & fetch gateway
-│   ├── keirox-server/          # Distributed runtime daemon & CLI binary
+│   ├── keirox-gateway/         # Kafka wire-protocol, SQS, AMQP gateways & migration bridge
+│   ├── keirox-server/          # Distributed runtime daemon, CLI parser & Prometheus metrics
 │   ├── keirox-bench/           # Canonical benchmark harness (P1–P6 workloads)
 │   ├── keirox-chaos/           # Chaos engineering fault injection & Jepsen test suite
-│   └── keirox-testkit/         # Test fixtures, mock storage & deterministic clocks
+│   └── keirox-testkit/         # Test fixtures, mock storage, cluster harness & protocol test suites
 ├── scripts/                    # Build, formatting, and CI automation scripts
 ├── deploy/                     # Dockerfiles, Kubernetes manifests & Helm charts
-└── tests/                      # End-to-end and verification test suites
-    ├── integration/            # Multi-crate integration & gateway compatibility
-    ├── golden/                 # Byte-for-byte binary framing assertions
-    ├── chaos/                  # Jepsen-style partition & crash tests
-    └── soak/                   # 72-hour endurance & leak verification tests
+└── tests/                      # End-to-end integration and verification test suites
 ```
 
 ---
@@ -108,29 +109,29 @@ keirox/
 | Crate | Layer | Purpose & Key Invariants |
 |---|---|---|
 | [`keirox-core`](crates/keirox-core) | Domain | Pure domain models, error taxonomy, identifiers, and Golden Invariant contracts. |
-| [`keirox-state`](crates/keirox-state) | Domain | `Roaring64Map` consumer state overlay (`READY`, `LEASED`, `ACKED`, `EVICTED_DLQ`). |
+| [`keirox-state`](crates/keirox-state) | Domain | `RoaringTreemap` 64-bit consumer state overlay (`READY`, `LEASED`, `ACKED`, `EVICTED_DLQ`). |
 | [`keirox-timer`](crates/keirox-timer) | Application | Hierarchical Timing Wheel for sub-millisecond lease scheduling and timeout eviction. |
 | [`keirox-arena`](crates/keirox-arena) | Application | Lock-free pre-allocated memory arenas guaranteeing zero heap allocations on hot paths. |
-| [`keirox-wal`](crates/keirox-wal) | Infrastructure | `io_uring` + `O_DIRECT` NVMe write-ahead log engine, 128B headers, CRC32C framing. |
+| [`keirox-wal`](crates/keirox-wal) | Infrastructure | `io_uring` + `O_DIRECT` NVMe write-ahead log engine, 128B headers, 46B `RecordEntry`, CRC32C framing. |
 | [`keirox-index`](crates/keirox-index) | Infrastructure | Packed 32-byte `StreamRegistryEntry`, sparse exception table, SSTable chunk index. |
-| [`keirox-consensus`](crates/keirox-consensus) | Infrastructure | Multi-Raft quorum consensus engine, Raft log, membership, and epoch fencing primitives. |
-| [`keirox-coordinator`](crates/keirox-coordinator) | Application | Deterministic coordinator sharding, consistent hashing, and epoch-fenced lease management. |
-| [`keirox-arrow-elt`](crates/keirox-arrow-elt) | Infrastructure | In-broker Arrow vectorizer, adaptive shredder (64-field cap), Iceberg committer. |
+| [`keirox-consensus`](crates/keirox-consensus) | Infrastructure | Multi-Raft quorum consensus engine, Raft log, persistent `HardState`, and epoch fencing primitives. |
+| [`keirox-coordinator`](crates/keirox-coordinator) | Application | Deterministic coordinator sharding, consistent hashing, and 24-byte epoch-fenced tokens. |
+| [`keirox-arrow-elt`](crates/keirox-arrow-elt) | Infrastructure | In-broker Arrow vectorizer, adaptive shredder (64-field cap), Iceberg committer with OCC. |
 | [`keirox-tier1`](crates/keirox-tier1) | Infrastructure | Tier-1 S3/GCS streaming, multipart uploader, manifest registry, and backpressure gating. |
 | [`keirox-schema`](crates/keirox-schema) | Application | Schema registry, compatibility governance, and adaptive columnar shredding policy. |
-| [`keirox-api`](crates/keirox-api) | Presentation | Protobuf definitions, Arrow Flight gRPC RPC, Kafka/SQS/AMQP gateway mappings. |
+| [`keirox-api`](crates/keirox-api) | Presentation | Protobuf definitions, Arrow Flight gRPC RPC, Kafka/SQS/AMQP gateway mappings, health & Prometheus telemetry. |
 | [`keirox-sdk`](crates/keirox-sdk) | Presentation | Native Arrow Flight & gRPC client SDK with producer/consumer/task-queue abstractions. |
-| [`keirox-gateway`](crates/keirox-gateway) | Presentation | Kafka wire-protocol compatibility ingest & fetch gateway with idempotence. |
-| [`keirox-server`](crates/keirox-server) | Presentation | Production daemon binary, CLI parser, cluster coordinator, and Prometheus metrics. |
+| [`keirox-gateway`](crates/keirox-gateway) | Presentation | Kafka wire-protocol compatibility ingest/fetch, SQS MD5 & handle encoding, AMQP, and migration bridge. |
+| [`keirox-server`](crates/keirox-server) | Presentation | Production daemon binary, CLI parser, cluster coordinator, and Prometheus metrics exposition. |
 | [`keirox-bench`](crates/keirox-bench) | Verification | Performance benchmark harness implementing canonical profiles P1 through P6. |
 | [`keirox-chaos`](crates/keirox-chaos) | Verification | Fault injection engine for partitions, disk stalls, clock skew, and crash testing. |
-| [`keirox-testkit`](crates/keirox-testkit) | Verification | Deterministic in-memory test fixtures, clocks, and property-based test helpers. |
+| [`keirox-testkit`](crates/keirox-testkit) | Verification | Deterministic in-memory test fixtures, cluster runtime, and full verification test suites. |
 
 ---
 
 ## 📚 Complete Architecture Documentation Suite
 
-The Keirox architecture is formally specified and verified across 25 comprehensive engineering documents in [`docs/architecture/`](docs/architecture/):
+The Keirox architecture is formally specified and verified across 25 comprehensive engineering documents in [`docs/architecture/`](docs/architecture/INDEX.md):
 
 | Level | Document ID | Title | Summary |
 |---|---|---|---|
@@ -164,7 +165,7 @@ The Keirox architecture is formally specified and verified across 25 comprehensi
 
 ## 🛠️ Engineering Execution Suite
 
-Engineering execution is governed by the formal plans in [`docs/engineering/`](docs/engineering/):
+Engineering execution is governed by the formal plans in [`docs/engineering/`](docs/engineering/README.md):
 
 ### Phase 1 Suite — Single-Node Core Engine (`1xx`)
 | Document ID | Plan Title | Scope & Purpose |
@@ -218,13 +219,24 @@ Engineering execution is governed by the formal plans in [`docs/engineering/`](d
 
 ---
 
+## 🔍 Verification & Demonstration Protocols
+
+Keirox includes rigorous forensic verification and live demonstration suites in [`docs/verification/`](docs/verification/README.md):
+
+| Protocol Document | Title | Description & Scope |
+|---|---|---|
+| [**`KEI-VER-001.md`**](docs/verification/KEI-VER-001.md) | **Implementation Verification Protocol** | 200+ forensic verification checks across 15 technical domains (Physical WAL bit-level corruption, 64-bit state overlays, Multi-Raft quorum, consumption semantics, lakehouse sync, envelope encryption, GDPR crypto-shredding, multi-region DR, protocol gateways, telemetry, benchmarking, and supply chain). |
+| [**`KEI-DEMO-700.md`**](docs/verification/KEI-DEMO-700.md) | **Live Enterprise Demonstration Report** | 10 real-world production-mode enterprise adoption scenarios: E-Commerce Order Pipeline, IoT Telemetry, Kafka Zero-Downtime Migration, GDPR Article 17 Erasure, Multi-Region DR Failover, Task Queue Priority Workers, Real-Time Fraud Detection, Log Analytics, Kubernetes Operations, and Supply Chain Integrity. |
+
+---
+
 ## 🏆 Formal Engineering Certification Reports
 
-Each development phase is formally certified through an automated evidence gate and documented in [`docs/reports/`](docs/reports/):
+Each development phase is formally certified through an automated evidence gate in [`docs/reports/`](docs/reports/README.md):
 
 | Phase | Certified Package | Key Certified Invariants & Milestones |
 |---|---|---|
-| **Phase 1** | [**`KEI-CERT-100`**](docs/reports/KEI-CERT-100.md) | Single-Node Core Engine, 128B WAL framing, Roaring Bitmap state plane, 46B `RecordEntry`, Parquet ELT. |
+| **Phase 1** | [**`KEI-CERT-100`**](docs/reports/KEI-CERT-100.md) | Single-Node Core Engine, 128B WAL framing, 46B `RecordEntry`, Roaring Bitmap state plane, Parquet ELT. |
 | **Phase 2** | [**`KEI-CERT-200`**](docs/reports/KEI-CERT-200.md) | 3-Node Multi-Raft Quorum, Coordinator Sharding, Epoch Fencing, Tier-1 S3 Streaming, <3.5s Failover. |
 | **Phase 3** | [**`KEI-CERT-300`**](docs/reports/KEI-CERT-300.md) | Kafka Wire Protocol Gateway, Native Arrow Flight SDK, Schema Registry Governance, Iceberg OCC Committer. |
 | **Phase 4** | [**`KEI-CERT-400`**](docs/reports/KEI-CERT-400.md) | KMS Envelope Encryption, GDPR/CCPA Crypto-Shredding, Default-Deny ABAC, SQS/AMQP Gateways, Multi-Region Mode A & PITR. |
@@ -233,40 +245,61 @@ Each development phase is formally certified through an automated evidence gate 
 ---
 
 ## 🛠️ Getting Started
-- **Rust**: Version 1.78+ (Stable / Nightly for AVX-512 intrinsics).
-- **Operating System**: Linux kernel 5.10+ recommended (for `io_uring` + `O_DIRECT`).
 
-### Building from Source
+### Prerequisites
+- **Rust Toolchain**: Stable Rust 1.78+ (`rustup default stable`).
+- **Operating System**: Linux (kernel 5.10+ recommended for `io_uring` + `O_DIRECT`), macOS, or Windows.
+
+### Building & Running Verification
 ```bash
 # Clone repository
 git clone https://github.com/seismael/keirox.git
 cd keirox
 
-# Run code format and linter checks
+# Validate formatting and linter hygiene (zero-warning policy)
 cargo fmt --all -- --check
-cargo clippy --all-targets --all-features -- -D warnings
+cargo clippy --workspace --all-targets --all-features -- -D warnings
 
-# Execute test suite
-cargo test --all
+# Run all unit, integration, and verification suites across the workspace
+cargo test --workspace
+
+# Run the formal KEI-VER-001 forensic verification protocol
+cargo test --package keirox-testkit --test kei_ver_001_protocol_test
+
+# Run the KEI-DEMO-700 enterprise adoption demo test suite
+cargo test --package keirox-testkit --test kei_demo_700_scenarios_test
+```
+
+### Running the Distributed Runtime Daemon
+```bash
+# Start a single-node daemon with TCP ingress and Prometheus metrics
+cargo run --package keirox-server -- start --bind-addr 127.0.0.1:9092 --metrics-addr 127.0.0.1:9100 --data-dir ./data
+
+# Inspect health probes
+curl http://127.0.0.1:9100/healthz
+curl http://127.0.0.1:9100/readyz
+
+# Query Prometheus metrics exposition
+curl http://127.0.0.1:9100/metrics
 ```
 
 ---
 
 ## 🤝 Contributing
 
-We welcome contributions from the community! Keirox is an open-source project that thrives on rigorous systems engineering, transparent collaboration, and empirical validation.
+We welcome contributions from systems engineers and researchers! Keirox is governed by rigorous engineering invariants and clean architectural boundaries.
 
 - Please read our [**Contributing Guide**](CONTRIBUTING.md) for details on code standards, hot-path memory hygiene, and pull request workflows.
-- All participants must abide by our [**Code of Conduct**](CODE_OF_CONDUCT.md).
-- To propose architectural changes, please submit an ADR proposal aligned with [`docs/architecture/KEI-ARC-012.md`](docs/architecture/KEI-ARC-012.md).
+- All architectural modifications must be audited against the Golden Invariant and formalized via an ADR aligned with [`docs/architecture/KEI-ARC-012.md`](docs/architecture/KEI-ARC-012.md).
+- All participants must adhere to our [**Code of Conduct**](CODE_OF_CONDUCT.md).
 
 ---
 
 ## 📄 License
 
-Keirox is distributed under the terms of the **[Apache License 2.0](LICENSE)**.
+Keirox is licensed under the **[Apache License 2.0](LICENSE)**.
 
-```
+```text
 Copyright 2026 Keirox Authors & Contributors
 
 Licensed under the Apache License, Version 2.0 (the "License");

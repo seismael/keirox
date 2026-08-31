@@ -3,6 +3,7 @@
 //! Benchmark test harness for canonical profiles P1 through P6 per `KEI-OPS-041` and `KEI-BENCH-001`.
 
 #![deny(missing_docs)]
+#![deny(unsafe_code)]
 
 /// Benchmark measurement and execution runner.
 pub mod runner;

@@ -2,6 +2,9 @@
 //!
 //! Client RPC protocols and wire translations per `KEI-DES-032`.
 
+#![deny(missing_docs)]
+#![deny(unsafe_code)]
+
 /// Administrative introspection and inspection endpoints.
 pub mod admin;
 /// Health, liveness, and readiness probes.

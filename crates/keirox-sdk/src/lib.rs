@@ -4,6 +4,7 @@
 //! and Arrow Flight vectorized reader interfaces per `KEI-ARC-023` and `KEI-DES-032`.
 
 #![deny(missing_docs)]
+#![deny(unsafe_code)]
 
 pub mod client;
 pub mod consumer;

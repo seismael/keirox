@@ -1,6 +1,7 @@
 //! Binary layouts and batch framing per `KEI-DES-030`.
 
 use crc32fast::Hasher;
+use keirox_core::{KeiroxError, Result};
 
 /// Magic identifier for segment header/footer (0x4B57414C = 'KWAL').
 pub const SEGMENT_MAGIC: u32 = 0x4B57414C;
@@ -91,6 +92,65 @@ impl SegmentHeader {
         header
     }
 
+    /// Safe serialization into 4096-byte array.
+    pub fn to_bytes(&self) -> Box<[u8; 4096]> {
+        let mut buf = Box::new([0u8; 4096]);
+        buf[0..4].copy_from_slice(&self.magic.to_le_bytes());
+        buf[4..6].copy_from_slice(&self.format_version.to_le_bytes());
+        buf[6..8].copy_from_slice(&self.flags.to_le_bytes());
+        buf[8..16].copy_from_slice(&self.segment_id.to_le_bytes());
+        buf[16..20].copy_from_slice(&self.volume_id.to_le_bytes());
+        buf[20..24].copy_from_slice(&self.node_id.to_le_bytes());
+        buf[24..32].copy_from_slice(&self.created_timestamp_ns.to_le_bytes());
+        buf[32..40].copy_from_slice(&self.physical_seq_start.to_le_bytes());
+        buf[40..48].copy_from_slice(&self.physical_seq_end.to_le_bytes());
+        buf[48..52].copy_from_slice(&self.batch_count.to_le_bytes());
+        // 4-byte padding [52..56]
+        buf[56..64].copy_from_slice(&self.record_count.to_le_bytes());
+        buf[64..68].copy_from_slice(&self.segment_crc32c.to_le_bytes());
+        // 4-byte padding [68..72]
+        buf[72..4096].copy_from_slice(&self.reserved);
+        buf
+    }
+
+    /// Safe deserialization from buffer.
+    pub fn from_bytes(buf: &[u8]) -> Result<Self> {
+        if buf.len() < 4096 {
+            return Err(KeiroxError::Internal(
+                "SegmentHeader buffer underflow".into(),
+            ));
+        }
+        let magic = u32::from_le_bytes(buf[0..4].try_into().unwrap_or_default());
+        let format_version = u16::from_le_bytes(buf[4..6].try_into().unwrap_or_default());
+        let flags = u16::from_le_bytes(buf[6..8].try_into().unwrap_or_default());
+        let segment_id = u64::from_le_bytes(buf[8..16].try_into().unwrap_or_default());
+        let volume_id = u32::from_le_bytes(buf[16..20].try_into().unwrap_or_default());
+        let node_id = u32::from_le_bytes(buf[20..24].try_into().unwrap_or_default());
+        let created_timestamp_ns = u64::from_le_bytes(buf[24..32].try_into().unwrap_or_default());
+        let physical_seq_start = u64::from_le_bytes(buf[32..40].try_into().unwrap_or_default());
+        let physical_seq_end = u64::from_le_bytes(buf[40..48].try_into().unwrap_or_default());
+        let batch_count = u32::from_le_bytes(buf[48..52].try_into().unwrap_or_default());
+        let record_count = u64::from_le_bytes(buf[56..64].try_into().unwrap_or_default());
+        let segment_crc32c = u32::from_le_bytes(buf[64..68].try_into().unwrap_or_default());
+        let mut reserved = [0u8; 4024];
+        reserved.copy_from_slice(&buf[72..4096]);
+        Ok(Self {
+            magic,
+            format_version,
+            flags,
+            segment_id,
+            volume_id,
+            node_id,
+            created_timestamp_ns,
+            physical_seq_start,
+            physical_seq_end,
+            batch_count,
+            record_count,
+            segment_crc32c,
+            reserved,
+        })
+    }
+
     /// Compute CRC32C over segment header fields (excluding CRC itself and padding).
     pub fn compute_crc(&self) -> u32 {
         let mut hasher = Hasher::new();
@@ -159,6 +219,51 @@ impl SegmentFooter {
         };
         footer.footer_crc32c = footer.compute_crc();
         footer
+    }
+
+    /// Safe serialization into 4096-byte array.
+    pub fn to_bytes(&self) -> Box<[u8; 4096]> {
+        let mut buf = Box::new([0u8; 4096]);
+        buf[0..4].copy_from_slice(&self.magic.to_le_bytes());
+        // 4-byte padding [4..8]
+        buf[8..16].copy_from_slice(&self.segment_id.to_le_bytes());
+        buf[16..24].copy_from_slice(&self.physical_seq_end.to_le_bytes());
+        buf[24..28].copy_from_slice(&self.batch_count.to_le_bytes());
+        // 4-byte padding [28..32]
+        buf[32..40].copy_from_slice(&self.record_count.to_le_bytes());
+        buf[40..48].copy_from_slice(&self.sealed_timestamp_ns.to_le_bytes());
+        buf[48..52].copy_from_slice(&self.footer_crc32c.to_le_bytes());
+        // 4-byte padding [52..56]
+        buf[56..4096].copy_from_slice(&self.reserved);
+        buf
+    }
+
+    /// Safe deserialization from buffer.
+    pub fn from_bytes(buf: &[u8]) -> Result<Self> {
+        if buf.len() < 4096 {
+            return Err(KeiroxError::Internal(
+                "SegmentFooter buffer underflow".into(),
+            ));
+        }
+        let magic = u32::from_le_bytes(buf[0..4].try_into().unwrap_or_default());
+        let segment_id = u64::from_le_bytes(buf[8..16].try_into().unwrap_or_default());
+        let physical_seq_end = u64::from_le_bytes(buf[16..24].try_into().unwrap_or_default());
+        let batch_count = u32::from_le_bytes(buf[24..28].try_into().unwrap_or_default());
+        let record_count = u64::from_le_bytes(buf[32..40].try_into().unwrap_or_default());
+        let sealed_timestamp_ns = u64::from_le_bytes(buf[40..48].try_into().unwrap_or_default());
+        let footer_crc32c = u32::from_le_bytes(buf[48..52].try_into().unwrap_or_default());
+        let mut reserved = [0u8; 4040];
+        reserved.copy_from_slice(&buf[56..4096]);
+        Ok(Self {
+            magic,
+            segment_id,
+            physical_seq_end,
+            batch_count,
+            record_count,
+            sealed_timestamp_ns,
+            footer_crc32c,
+            reserved,
+        })
     }
 
     /// Compute CRC32C over footer fields (excluding CRC itself and padding).
@@ -236,6 +341,55 @@ impl BatchHeader {
         header
     }
 
+    /// Safe serialization into 128-byte array.
+    pub fn to_bytes(&self) -> [u8; 128] {
+        let mut buf = [0u8; 128];
+        buf[0..4].copy_from_slice(&self.magic.to_le_bytes());
+        buf[4..6].copy_from_slice(&self.version.to_le_bytes());
+        buf[6..8].copy_from_slice(&self.flags.to_le_bytes());
+        buf[8..12].copy_from_slice(&self.total_batch_size.to_le_bytes());
+        buf[12..16].copy_from_slice(&self.record_count.to_le_bytes());
+        buf[16..24].copy_from_slice(&self.base_offset.to_le_bytes());
+        buf[24..32].copy_from_slice(&self.last_offset.to_le_bytes());
+        buf[32..40].copy_from_slice(&self.timestamp_us.to_le_bytes());
+        buf[40..44].copy_from_slice(&self.header_crc.to_le_bytes());
+        buf[44..48].copy_from_slice(&self.payload_crc.to_le_bytes());
+        buf[48..112].copy_from_slice(&self._reserved);
+        buf
+    }
+
+    /// Safe deserialization from buffer.
+    pub fn from_bytes(buf: &[u8]) -> Result<Self> {
+        if buf.len() < 128 {
+            return Err(KeiroxError::Internal("BatchHeader buffer underflow".into()));
+        }
+        let magic = u32::from_le_bytes(buf[0..4].try_into().unwrap_or_default());
+        let version = u16::from_le_bytes(buf[4..6].try_into().unwrap_or_default());
+        let flags = u16::from_le_bytes(buf[6..8].try_into().unwrap_or_default());
+        let total_batch_size = u32::from_le_bytes(buf[8..12].try_into().unwrap_or_default());
+        let record_count = u32::from_le_bytes(buf[12..16].try_into().unwrap_or_default());
+        let base_offset = u64::from_le_bytes(buf[16..24].try_into().unwrap_or_default());
+        let last_offset = u64::from_le_bytes(buf[24..32].try_into().unwrap_or_default());
+        let timestamp_us = u64::from_le_bytes(buf[32..40].try_into().unwrap_or_default());
+        let header_crc = u32::from_le_bytes(buf[40..44].try_into().unwrap_or_default());
+        let payload_crc = u32::from_le_bytes(buf[44..48].try_into().unwrap_or_default());
+        let mut _reserved = [0u8; 64];
+        _reserved.copy_from_slice(&buf[48..112]);
+        Ok(Self {
+            magic,
+            version,
+            flags,
+            total_batch_size,
+            record_count,
+            base_offset,
+            last_offset,
+            timestamp_us,
+            header_crc,
+            payload_crc,
+            _reserved,
+        })
+    }
+
     /// Compute CRC32C over header bytes (excluding CRC fields).
     pub fn compute_header_crc(&self) -> u32 {
         let mut hasher = Hasher::new();
@@ -282,6 +436,46 @@ pub struct RecordEntry {
 }
 
 impl RecordEntry {
+    /// Safe serialization into 46-byte array.
+    pub fn to_bytes(&self) -> [u8; 46] {
+        let mut buf = [0u8; 46];
+        buf[0..16].copy_from_slice(&self.stream_id);
+        buf[16..24].copy_from_slice(&self.logical_offset.to_le_bytes());
+        buf[24..28].copy_from_slice(&self.producer_seq_delta.to_le_bytes());
+        buf[28..32].copy_from_slice(&self.payload_offset.to_le_bytes());
+        buf[32..36].copy_from_slice(&self.payload_len.to_le_bytes());
+        buf[36..40].copy_from_slice(&self.timestamp_delta_ms.to_le_bytes());
+        buf[40..42].copy_from_slice(&self.record_flags.to_le_bytes());
+        buf[42..46].copy_from_slice(&self.record_crc32c.to_le_bytes());
+        buf
+    }
+
+    /// Safe deserialization from buffer.
+    pub fn from_bytes(buf: &[u8]) -> Result<Self> {
+        if buf.len() < 46 {
+            return Err(KeiroxError::Internal("RecordEntry buffer underflow".into()));
+        }
+        let mut stream_id = [0u8; 16];
+        stream_id.copy_from_slice(&buf[0..16]);
+        let logical_offset = u64::from_le_bytes(buf[16..24].try_into().unwrap_or_default());
+        let producer_seq_delta = u32::from_le_bytes(buf[24..28].try_into().unwrap_or_default());
+        let payload_offset = u32::from_le_bytes(buf[28..32].try_into().unwrap_or_default());
+        let payload_len = u32::from_le_bytes(buf[32..36].try_into().unwrap_or_default());
+        let timestamp_delta_ms = u32::from_le_bytes(buf[36..40].try_into().unwrap_or_default());
+        let record_flags = u16::from_le_bytes(buf[40..42].try_into().unwrap_or_default());
+        let record_crc32c = u32::from_le_bytes(buf[42..46].try_into().unwrap_or_default());
+        Ok(Self {
+            stream_id,
+            logical_offset,
+            producer_seq_delta,
+            payload_offset,
+            payload_len,
+            timestamp_delta_ms,
+            record_flags,
+            record_crc32c,
+        })
+    }
+
     /// Create a new record entry.
     pub fn new(
         stream_id: [u8; 16],
